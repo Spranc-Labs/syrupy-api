@@ -1,0 +1,22 @@
+{
+	"folders": [
+		{
+			"path": ".",
+			"name": "root"
+		},
+		{
+			"path": "api",
+			"name": "api"
+		},
+		{
+			"path": "../subble"
+		}
+	],
+	"settings": {
+		"rubyLsp.indexing": {
+			"excludedPatterns": [
+				"**/spec/**/*.rb",
+			]
+		},
+	}
+} 

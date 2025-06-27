@@ -1,0 +1,161 @@
+class RodauthApp < Rodauth::Rails::App
+  configure do
+    # List of authentication features that are loaded.
+    enable :create_account, :verify_account, :verify_account_grace_period,
+           :login, :logout, :remember,
+           :reset_password, :change_password, :change_password_notify,
+           :change_login, :verify_login_change, :close_account
+
+    # See the Rodauth documentation for the list of available config options:
+    # http://rodauth.jeremyevans.net/documentation.html
+
+    # ==> General
+    # The secret key used for hashing public-facing tokens.
+    # Defaults to Rails `secret_key_base`, but you can use your own key.
+    # hmac_secret "your-secret-key"
+
+    # Use path prefix for all routes.
+    # prefix "/auth"
+
+    # Specify the controller used for view rendering, CSRF, and callbacks.
+    rails_controller { RodauthController }
+
+    # Make built in page titles accessible in your views via an instance variable.
+    title_instance_variable :@page_title
+
+    # Store account status in an integer column without foreign key constraint.
+    account_status_column :status
+
+    # Store password hash in a column on the accounts table.
+    # account_password_hash_column :password_hash
+
+    # Change prefix of table and foreign key names from default "account"
+    # accounts_table :users
+    # verify_account_table :user_verification_keys
+    # verify_login_change_table :user_login_change_keys
+    # reset_password_table :user_password_reset_keys
+    # remember_table :user_remember_keys
+
+    # Specify the table for storing password hashes.
+    # password_hash_table :account_password_hashes
+
+    # ==> Emails
+    # Use a custom mailer for delivering authentication emails.
+    # create_reset_password_email do
+    #   RodauthMailer.reset_password(self.class.configuration_name, account_id, reset_password_key_value)
+    # end
+    # create_verify_account_email do
+    #   RodauthMailer.verify_account(self.class.configuration_name, account_id, verify_account_key_value)
+    # end
+    # create_verify_login_change_email do |_login|
+    #   RodauthMailer.verify_login_change(self.class.configuration_name, account_id, verify_login_change_key_value)
+    # end
+    # create_password_changed_email do
+    #   RodauthMailer.password_changed(self.class.configuration_name, account_id)
+    # end
+    # create_email_auth_email do
+    #   RodauthMailer.email_auth(self.class.configuration_name, account_id, email_auth_key_value)
+    # end
+    # create_unlock_account_email do
+    #   RodauthMailer.unlock_account(self.class.configuration_name, account_id, unlock_account_key_value)
+    # end
+    # send_email do |email|
+    #   # queue email delivery on the mailer after the transaction commits
+    #   db.after_commit { email.deliver_later }
+    # end
+
+    # ==> Redirects
+    # Redirect to wherever you want after a successful account creation.
+    # create_account_redirect do
+    #   "/welcome"
+    # end
+
+    # Redirect to wherever you want after a successful account verification.
+    # verify_account_redirect do
+    #   "/dashboard"
+    # end
+
+    # Redirect to wherever you want after a successful login.
+    # login_redirect do
+    #   "/dashboard"
+    # end
+
+    # Redirect to wherever you want after a successful logout.
+    # logout_redirect do
+    #   "/login"
+    # end
+
+    # Redirect to wherever you want after a successful password reset.
+    # reset_password_redirect do
+    #   "/login"
+    # end
+
+    # Redirect to wherever you want after a successful password change.
+    # change_password_redirect do
+    #   "/account"
+    # end
+
+    # ==> Validation
+    # Override default validation error messages.
+    # no_matching_login_message "user with this email address doesn't exist"
+    # already_an_account_with_this_login_message "user with this email address already exists"
+    # password_too_short_message { "needs to have at least #{password_minimum_length} characters" }
+    # login_does_not_meet_requirements_message { "invalid email address" }
+
+    # Change minimum number of password characters required.
+    # password_minimum_length 8
+
+    # ==> Remember Feature
+    # Remember all logged in users.
+    # remember_period 2.weeks.to_i
+
+    # ==> Hooks & Checks
+    # Validate account status after login, raise an error for unverified accounts.
+    # verify_account_grace_period 3.days.to_i
+
+    # Perform additional validation on login
+    # before_login do
+    #   # throw an error message if this account is soft deleted, etc.
+    # end
+
+    # Perform additional validation on account creation
+    # before_create_account do
+    #   # throw an error message if this account is not allowed to be created
+    # end
+
+    # ==> Database Functions
+    # Use database functions if you're using PostgreSQL, MySQL, or Microsoft SQL Server.
+    # use_database_authentication_functions? true
+
+    # ==> Feature Options
+    # Enable logging out all user sessions when password is changed.
+    # logout_on_password_change? true
+
+    # Make sure to add appropriate before_action to ApplicationController, and that
+    # you are not calling one of the authentication methods listed below from a
+    # before_action callback, as that can cause infinitive recursion.
+    already_logged_in { redirect login_redirect }
+
+    # ==> Checks
+    # Add your own check for a logged in user.
+    # check_already_logged_in? do
+    #   authenticated?
+    # end
+
+    # ==> Creating an Account
+    # Automatically login user after creating an account.
+    # create_account_autologin? true
+
+    # Send user an email after creating an account asking for verification.
+    # require_email_confirmation_when_creating_account? false
+
+    # Set the default account status when creating an account.
+    # default_account_status do
+    #   Account::StatusId::Unverified
+    # end
+
+    # ==> Extending Functionality
+    # If you need additional functionality, you can extend this configuration
+    # with custom logic or include your own plugins.
+  end
+end 
