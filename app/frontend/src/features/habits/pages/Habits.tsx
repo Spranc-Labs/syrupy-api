@@ -6,7 +6,7 @@ interface Habit {
   name: string;
   description: string;
   frequency: 'daily' | 'weekly' | 'monthly';
-  status: 'active' | 'paused' | 'completed';
+  active: boolean;
   created_at: string;
 }
 
@@ -19,7 +19,7 @@ export const Habits: React.FC = () => {
     name: '',
     description: '',
     frequency: 'daily' as Habit['frequency'],
-    status: 'active' as Habit['status']
+    active: true
   });
   const [error, setError] = useState('');
 
@@ -41,7 +41,8 @@ export const Habits: React.FC = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setHabits(data);
+        // Handle paginated response format
+        setHabits(data.data || data);
       } else {
         setError('Failed to fetch habits');
       }
@@ -74,7 +75,7 @@ export const Habits: React.FC = () => {
         await fetchHabits();
         setIsFormOpen(false);
         setEditingHabit(null);
-        setFormData({ name: '', description: '', frequency: 'daily', status: 'active' });
+        setFormData({ name: '', description: '', frequency: 'daily', active: true });
       } else {
         setError('Failed to save habit');
       }
@@ -89,7 +90,7 @@ export const Habits: React.FC = () => {
       name: habit.name,
       description: habit.description,
       frequency: habit.frequency,
-      status: habit.status
+      active: habit.active
     });
     setIsFormOpen(true);
   };
@@ -116,17 +117,12 @@ export const Habits: React.FC = () => {
 
   const openCreateForm = () => {
     setEditingHabit(null);
-    setFormData({ name: '', description: '', frequency: 'daily', status: 'active' });
+    setFormData({ name: '', description: '', frequency: 'daily', active: true });
     setIsFormOpen(true);
   };
 
-  const getStatusColor = (status: Habit['status']) => {
-    switch (status) {
-      case 'active': return 'text-green-700 bg-green-100';
-      case 'paused': return 'text-yellow-700 bg-yellow-100';
-      case 'completed': return 'text-blue-700 bg-blue-100';
-      default: return 'text-gray-700 bg-gray-100';
-    }
+  const getActiveColor = (active: boolean) => {
+    return active ? 'text-green-700 bg-green-100' : 'text-gray-700 bg-gray-100';
   };
 
   const getFrequencyColor = (frequency: Habit['frequency']) => {
@@ -138,12 +134,12 @@ export const Habits: React.FC = () => {
     }
   };
 
-  if (isLoading) return <div className="flex justify-center p-8">Loading...</div>;
+  if (isLoading) return <div className="flex justify-center p-8 text-gray-600 dark:text-gray-400">Loading...</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Habits</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Habits</h1>
         <button
           onClick={openCreateForm}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md"
@@ -160,40 +156,40 @@ export const Habits: React.FC = () => {
 
       {isFormOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
               {editingHabit ? 'Edit Habit' : 'New Habit'}
             </h2>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Name
                 </label>
                 <input
                   type="text"
                   required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Description
                 </label>
                 <textarea
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Frequency
                 </label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
                   value={formData.frequency}
                   onChange={(e) => setFormData({ ...formData, frequency: e.target.value as Habit['frequency'] })}
                 >
@@ -203,24 +199,23 @@ export const Habits: React.FC = () => {
                 </select>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Status
                 </label>
                 <select
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  value={formData.status}
-                  onChange={(e) => setFormData({ ...formData, status: e.target.value as Habit['status'] })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
+                  value={formData.active ? 'active' : 'inactive'}
+                  onChange={(e) => setFormData({ ...formData, active: e.target.value === 'active' })}
                 >
                   <option value="active">Active</option>
-                  <option value="paused">Paused</option>
-                  <option value="completed">Completed</option>
+                  <option value="inactive">Inactive</option>
                 </select>
               </div>
               <div className="flex justify-end space-x-3">
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                  className="px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Cancel
                 </button>
@@ -238,39 +233,39 @@ export const Habits: React.FC = () => {
 
       <div className="grid gap-4">
         {habits.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
             No habits yet. Create your first habit!
           </div>
         ) : (
           habits.map((habit) => (
-            <div key={habit.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <div key={habit.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
               <div className="flex justify-between items-start mb-2">
-                <h3 className="text-lg font-semibold text-gray-900">{habit.name}</h3>
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{habit.name}</h3>
                 <div className="flex items-center space-x-2">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${getFrequencyColor(habit.frequency)}`}>
                     {habit.frequency}
                   </span>
-                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(habit.status)}`}>
-                    {habit.status}
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getActiveColor(habit.active)}`}>
+                    {habit.active ? 'Active' : 'Inactive'}
                   </span>
                   <button
                     onClick={() => handleEdit(habit)}
-                    className="text-indigo-600 hover:text-indigo-900 text-sm"
+                    className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 text-sm"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(habit.id)}
-                    className="text-red-600 hover:text-red-900 text-sm"
+                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 text-sm"
                   >
                     Delete
                   </button>
                 </div>
               </div>
               {habit.description && (
-                <p className="text-gray-700 mb-2">{habit.description}</p>
+                <p className="text-gray-700 dark:text-gray-300 mb-2">{habit.description}</p>
               )}
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
                 Created: {new Date(habit.created_at).toLocaleDateString()}
               </p>
             </div>

@@ -8,12 +8,15 @@ import 'react-toastify/dist/ReactToastify.css'
 import { FullscreenSpinner } from 'src/components/Loading/Spinner'
 import { AppRoutes } from 'src/router/routes'
 import { queryClient } from 'src/utils/queryClient'
+import { ThemeProvider } from 'src/providers/ThemeProvider'
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <QueryClientApp />
-    </QueryClientProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={queryClient}>
+        <QueryClientApp />
+      </QueryClientProvider>
+    </ThemeProvider>
   )
 }
 
@@ -24,7 +27,12 @@ function QueryClientApp() {
         <Suspense fallback={<FullscreenSpinner isLoading={true} />}>
           <AppRoutes />
         </Suspense>
-        <ToastContainer stacked />
+        <ToastContainer 
+          stacked 
+          theme="colored"
+          position="top-right"
+          className="!z-50"
+        />
       </BrowserRouter>
       <ReactQueryDevtools />
     </>

@@ -3,7 +3,7 @@ import { useAuth } from '../../auth/providers/AuthProvider';
 
 interface MoodLog {
   id: number;
-  mood_value: number;
+  rating: number;
   notes: string;
   logged_at: string;
   created_at: string;
@@ -15,7 +15,7 @@ export const MoodLogs: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingMood, setEditingMood] = useState<MoodLog | null>(null);
   const [formData, setFormData] = useState({
-    mood_value: 5,
+    rating: 5,
     notes: '',
     logged_at: new Date().toISOString().split('T')[0]
   });
@@ -39,7 +39,8 @@ export const MoodLogs: React.FC = () => {
       });
       if (response.ok) {
         const data = await response.json();
-        setMoodLogs(data);
+        // Handle paginated response format
+        setMoodLogs(data.data || data);
       } else {
         setError('Failed to fetch mood logs');
       }
@@ -73,7 +74,7 @@ export const MoodLogs: React.FC = () => {
         setIsFormOpen(false);
         setEditingMood(null);
         setFormData({
-          mood_value: 5,
+          rating: 5,
           notes: '',
           logged_at: new Date().toISOString().split('T')[0]
         });
@@ -88,7 +89,7 @@ export const MoodLogs: React.FC = () => {
   const handleEdit = (mood: MoodLog) => {
     setEditingMood(mood);
     setFormData({
-      mood_value: mood.mood_value,
+      rating: mood.rating,
       notes: mood.notes,
       logged_at: mood.logged_at ? mood.logged_at.split('T')[0] : new Date().toISOString().split('T')[0]
     });
@@ -118,7 +119,7 @@ export const MoodLogs: React.FC = () => {
   const openCreateForm = () => {
     setEditingMood(null);
     setFormData({
-      mood_value: 5,
+      rating: 5,
       notes: '',
       logged_at: new Date().toISOString().split('T')[0]
     });
@@ -141,12 +142,12 @@ export const MoodLogs: React.FC = () => {
     return 'text-blue-700 bg-blue-100';
   };
 
-  if (isLoading) return <div className="flex justify-center p-8">Loading...</div>;
+  if (isLoading) return <div className="flex justify-center p-8 text-gray-600 dark:text-gray-400">Loading...</div>;
 
   return (
     <div className="max-w-4xl mx-auto p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Mood Logs</h1>
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Mood Logs</h1>
         <button
           onClick={openCreateForm}
           className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md"
@@ -163,13 +164,13 @@ export const MoodLogs: React.FC = () => {
 
       {isFormOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg max-w-md w-full p-6">
-            <h2 className="text-xl font-bold mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
               {editingMood ? 'Edit Mood Log' : 'New Mood Log'}
             </h2>
             <form onSubmit={handleSubmit}>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Mood (1-10 scale)
                 </label>
                 <div className="flex items-center space-x-4">
@@ -179,35 +180,34 @@ export const MoodLogs: React.FC = () => {
                     max="10"
                     step="1"
                     className="flex-1"
-                    value={formData.mood_value}
-                    onChange={(e) => setFormData({ ...formData, mood_value: parseInt(e.target.value) })}
+                    value={formData.rating}
+                    onChange={(e) => setFormData({ ...formData, rating: parseInt(e.target.value) })}
                   />
                   <div className="flex items-center space-x-2">
-                    <span className="text-2xl">{getMoodEmoji(formData.mood_value)}</span>
-                    <span className="font-medium">{formData.mood_value}/10</span>
+                    <span className="text-2xl">{getMoodEmoji(formData.rating)}</span>
+                    <span className="font-medium">{formData.rating}/10</span>
                   </div>
                 </div>
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Notes
                 </label>
                 <textarea
                   rows={4}
                   placeholder="How are you feeling? What happened today?"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                 />
               </div>
               <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Date
                 </label>
                 <input
                   type="date"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
                   value={formData.logged_at}
                   onChange={(e) => setFormData({ ...formData, logged_at: e.target.value })}
                 />
@@ -216,7 +216,7 @@ export const MoodLogs: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
+                  className="px-4 py-2 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-700"
                 >
                   Cancel
                 </button>
@@ -224,7 +224,7 @@ export const MoodLogs: React.FC = () => {
                   type="submit"
                   className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700"
                 >
-                  {editingMood ? 'Update' : 'Log Mood'}
+                  {editingMood ? 'Update' : 'Create'}
                 </button>
               </div>
             </form>
@@ -234,44 +234,42 @@ export const MoodLogs: React.FC = () => {
 
       <div className="grid gap-4">
         {moodLogs.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            No mood logs yet. Start tracking your mood!
+          <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+            No mood logs yet. Log your first mood!
           </div>
         ) : (
           moodLogs.map((mood) => (
-            <div key={mood.id} className="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+            <div key={mood.id} className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 shadow-sm">
               <div className="flex justify-between items-start mb-2">
                 <div className="flex items-center space-x-3">
-                  <span className="text-3xl">{getMoodEmoji(mood.mood_value)}</span>
+                  <span className="text-3xl">{getMoodEmoji(mood.rating)}</span>
                   <div>
-                    <div className="flex items-center space-x-2">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getMoodColor(mood.mood_value)}`}>
-                        {mood.mood_value}/10
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-500">
-                      {new Date(mood.logged_at).toLocaleDateString()}
-                    </p>
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getMoodColor(mood.rating)}`}>
+                      {mood.rating}/10
+                    </span>
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
                   <button
                     onClick={() => handleEdit(mood)}
-                    className="text-indigo-600 hover:text-indigo-900 text-sm"
+                    className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-300 text-sm"
                   >
                     Edit
                   </button>
                   <button
                     onClick={() => handleDelete(mood.id)}
-                    className="text-red-600 hover:text-red-900 text-sm"
+                    className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 text-sm"
                   >
                     Delete
                   </button>
                 </div>
               </div>
               {mood.notes && (
-                <p className="text-gray-700 mt-2">{mood.notes}</p>
+                <p className="text-gray-700 dark:text-gray-300 mb-2">{mood.notes}</p>
               )}
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Logged: {new Date(mood.logged_at).toLocaleDateString()}
+              </p>
             </div>
           ))
         )}

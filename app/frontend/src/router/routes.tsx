@@ -6,6 +6,7 @@ import { Login } from 'src/features/auth/pages/Login'
 import { Register } from 'src/features/auth/pages/Register'
 import { Dashboard } from 'src/features/dashboard/pages/Dashboard'
 import { JournalEntries } from 'src/features/journal/pages/JournalEntries'
+import { JournalEditor } from 'src/features/journal/pages/JournalEditor'
 import { Goals } from 'src/features/goals/pages/Goals'
 import { Habits } from 'src/features/habits/pages/Habits'
 import { MoodLogs } from 'src/features/mood/pages/MoodLogs'
@@ -23,6 +24,8 @@ export function AppRoutes() {
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="dashboard" element={<Dashboard />} />
           <Route path="journal" element={<JournalEntries />} />
+          <Route path="journal/new" element={<JournalEditor />} />
+          <Route path="journal/:id/edit" element={<JournalEditor />} />
           <Route path="goals" element={<Goals />} />
           <Route path="habits" element={<Habits />} />
           <Route path="mood" element={<MoodLogs />} />
