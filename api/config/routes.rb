@@ -17,8 +17,12 @@ Rails.application.routes.draw do
 
     # Protected API routes (auth required)
     resources :journal_entries do
+      member do
+        post :analyze_ai
+      end
       collection do
         get :insights
+        get :ai_service_status
       end
     end
     

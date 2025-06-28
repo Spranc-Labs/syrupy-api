@@ -111,6 +111,7 @@ gem "activerecord-import"
 
 # For HTTP requests
 gem "faraday"
+gem "httparty"
 
 # For generating random strings
 gem "securerandom"

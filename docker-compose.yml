@@ -8,6 +8,7 @@ x-backend-common: &backend-common
     PIDFILE: /tmp/pids/server.pid
     GEM_HOME: /api-bundle
     HISTFILE: /root/hist/.bash_history
+    AI_INSIGHTS_SERVICE_URL: http://ai-insights-service
   tty: true
   stdin_open: true
   tmpfs:
@@ -31,6 +32,9 @@ services:
     ports:
       - "3000:3000"
     shm_size: 4g
+    depends_on:
+      ai-insights-service:
+        condition: service_healthy
 
   good-job:
     <<: *backend-common
@@ -75,6 +79,24 @@ services:
     healthcheck:
       test: pg_isready -U postgres -h 127.0.0.1
       interval: 5s
+
+  ai-insights-service:
+    build:
+      context: ./ai-insights-service
+      dockerfile: Dockerfile
+    ports:
+      - "8001:80"
+    volumes:
+      - ./ai-insights-service:/app
+    environment:
+      - PYTHONPATH=/app
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
+      interval: 30s
+      timeout: 30s
+      start_period: 60s
+      retries: 3
+    restart: unless-stopped
 
 volumes:
   db_data:

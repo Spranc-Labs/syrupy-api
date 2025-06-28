@@ -9,6 +9,13 @@ class JournalEntry < ApplicationRecord
   validates :content, presence: true
   validates :mood_rating, inclusion: { in: 1..10 }, allow_blank: true
 
+  # AI insights callbacks
+  after_create :analyze_with_ai_async
+  after_update :analyze_with_ai_async, if: :should_reanalyze?
+
+  # Serialization for AI emotions data
+  serialize :ai_emotions, coder: JSON
+
   scope :filter_by_text, ->(text) {
     if text.present?
       search_by_keywords(text)
@@ -44,11 +51,21 @@ class JournalEntry < ApplicationRecord
     where(mood_rating: min..max) if min.present? && max.present?
   }
 
+  scope :by_ai_mood_range, ->(min, max) {
+    where(ai_mood_score: min..max) if min.present? && max.present?
+  }
+
+  scope :by_ai_category, ->(category) {
+    where(ai_category: category) if category.present?
+  }
+
   scope :by_date_range, ->(start_date, end_date) {
     where(created_at: start_date..end_date) if start_date.present? && end_date.present?
   }
 
   scope :recent, -> { order(created_at: :desc) }
+
+  scope :ai_analyzed, -> { where.not(ai_analyzed_at: nil) }
 
   def formatted_date
     created_at.strftime("%B %d, %Y")
@@ -58,7 +75,78 @@ class JournalEntry < ApplicationRecord
     content.split.size
   end
 
+  def ai_analyzed?
+    ai_analyzed_at.present?
+  end
+
+  def analyze_with_ai!
+    Rails.logger.info "Analyzing journal entry #{id} with AI insights"
+    
+    analysis = AiInsightsService.analyze_journal_entry(
+      title: title,
+      content: content
+    )
+    
+    update!(
+      ai_mood_score: analysis[:mood_score],
+      ai_mood_label: analysis[:mood_label],
+      ai_category: analysis[:category],
+      ai_emotions: analysis[:emotions],
+      ai_processing_time_ms: analysis[:processing_time_ms],
+      ai_analyzed_at: Time.current
+    )
+    
+    Rails.logger.info "AI analysis completed for journal entry #{id}"
+    analysis
+  rescue StandardError => e
+    Rails.logger.error "Failed to analyze journal entry #{id}: #{e.message}"
+    nil
+  end
+
+  def ai_mood_emoji
+    case ai_mood_label
+    when 'very positive' then '😄'
+    when 'positive' then '😊'
+    when 'neutral' then '😐'
+    when 'negative' then '😔'
+    when 'very negative' then '😢'
+    else '❓'
+    end
+  end
+
+  def ai_category_display
+    ai_category&.humanize || 'Unknown'
+  end
+
+  def dominant_emotion
+    return nil unless ai_emotions.is_a?(Hash) && ai_emotions.any?
+    
+    ai_emotions.max_by { |_, score| score }&.first
+  end
+
+  def dominant_emotion_emoji
+    emotion_emojis = {
+      'joy' => '😄', 'happiness' => '😊', 'love' => '❤️',
+      'sadness' => '😢', 'anger' => '😠', 'fear' => '😨',
+      'surprise' => '😲', 'disgust' => '🤢', 'anticipation' => '🤔',
+      'trust' => '🤗', 'optimism' => '🌟', 'pessimism' => '😞'
+    }
+    
+    emotion = dominant_emotion
+    emotion_emojis[emotion] || '❓'
+  end
+
   private
+
+  def should_reanalyze?
+    # Reanalyze if title or content changed
+    saved_change_to_title? || saved_change_to_content?
+  end
+
+  def analyze_with_ai_async
+    # Use background job for AI analysis to avoid blocking the request
+    AnalyzeJournalEntryJob.perform_later(self)
+  end
 
   def self.search_rank_sql(terms)
     # Calculate relevance score based on:

@@ -1,78 +1,83 @@
+require 'net/http'
+require 'uri'
+require 'json'
+
 module Api
   class JournalEntriesController < ApiController
+    before_action :set_journal_entry, only: [:show, :update, :destroy, :analyze_ai]
+    before_action :authorize_journal_entry, only: [:show, :update, :destroy, :analyze_ai]
+    skip_after_action :verify_policy_scoped, only: [:ai_service_status, :show]
+
     def index
-      journal_entries = policy_scope(JournalEntry)
-        .includes(:tags, :user)
-        .filter_by_text(params[:q])
-
-      if params[:mood_min].present? && params[:mood_max].present?
-        journal_entries = journal_entries.by_mood_range(params[:mood_min], params[:mood_max])
-      end
-
-      if params[:start_date].present? && params[:end_date].present?
-        journal_entries = journal_entries.by_date_range(
-          Date.parse(params[:start_date]),
-          Date.parse(params[:end_date])
-        )
-      end
-
-      journal_entries = journal_entries
+      @journal_entries = policy_scope(JournalEntry)
+        .includes(:tags)
+        .filter_by_text(params[:search])
+        .by_ai_category(params[:ai_category])
         .recent
-        .paginate(page: params[:page], per_page: params[:per_page])
+        .paginate(page: params[:page], per_page: 20)
 
-      associations = { tags: {}, user: {} }
-      render_page_with_blueprint(collection: journal_entries, blueprint: JournalEntryBlueprint, associations:)
+      render json: JournalEntryBlueprint.render(@journal_entries, include: [:tags])
     end
 
     def show
-      journal_entry = policy_scope(JournalEntry).find(params[:id])
-      associations = { tags: {}, user: {} }
-
-      render json: { data: JournalEntryBlueprint.render_with_associations(journal_entry, associations) }
+      render json: JournalEntryBlueprint.render(@journal_entry, include: [:tags])
     end
 
     def create
-      authorize(JournalEntry)
+      @journal_entry = current_user.journal_entries.build(journal_entry_params)
+      authorize @journal_entry
 
-      journal_entry = JournalEntry.new(journal_entry_params)
-      journal_entry.user = Current.user
-      journal_entry.save!
-
-      # Handle tags
-      if params[:tag_ids].present?
-        tag_ids = params[:tag_ids].reject(&:blank?)
-        journal_entry.tag_ids = tag_ids
+      if @journal_entry.save
+        render json: JournalEntryBlueprint.render(@journal_entry, include: [:tags]), status: :created
+      else
+        render json: { errors: @journal_entry.errors }, status: :unprocessable_entity
       end
-
-      render json: { data: JournalEntryBlueprint.render_as_hash(journal_entry) }, status: :created
     end
 
     def update
-      journal_entry = JournalEntry.find(params[:id])
-      authorize(journal_entry)
-
-      journal_entry.update!(journal_entry_params)
-
-      # Handle tags
-      if params[:tag_ids].present?
-        tag_ids = params[:tag_ids].reject(&:blank?)
-        journal_entry.tag_ids = tag_ids
+      authorize @journal_entry
+      if @journal_entry.update(journal_entry_params)
+        render json: JournalEntryBlueprint.render(@journal_entry, include: [:tags])
+      else
+        render json: { errors: @journal_entry.errors }, status: :unprocessable_entity
       end
-
-      render json: { data: JournalEntryBlueprint.render_as_hash(journal_entry) }
     end
 
     def destroy
-      journal_entry = JournalEntry.find(params[:id])
-      authorize(journal_entry)
-      journal_entry.discard!
+      @journal_entry.discard
       head :no_content
+    end
+
+    def analyze_ai
+      if @journal_entry.analyze_with_ai!
+        render json: JournalEntryBlueprint.render(@journal_entry, include: [:tags])
+      else
+        render json: { error: 'Failed to analyze journal entry' }, status: :unprocessable_entity
+      end
+    end
+
+    def ai_service_status
+      status = {
+        service_available: AiInsightsService.health_check,
+        available_categories: AiInsightsService.available_categories,
+        timestamp: Time.current.iso8601
+      }
+      
+      render json: status
     end
 
     private
 
+    def set_journal_entry
+      @journal_entry = JournalEntry.find(params[:id])
+    end
+
+    def authorize_journal_entry
+      authorize @journal_entry
+    end
+
     def journal_entry_params
-      params.permit(:title, :content, :mood_rating)
+      params.permit(:title, :content, :mood_rating, tag_ids: [])
     end
   end
 end

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_06_27_095943) do
+ActiveRecord::Schema[7.1].define(version: 2025_06_28_122254) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "plpgsql"
@@ -235,6 +235,15 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_27_095943) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "discarded_at"
+    t.string "mood"
+    t.decimal "ai_mood_score", precision: 5, scale: 3
+    t.string "ai_mood_label"
+    t.string "ai_category"
+    t.text "ai_emotions"
+    t.decimal "ai_processing_time_ms", precision: 8, scale: 2
+    t.datetime "ai_analyzed_at", precision: nil
+    t.index ["ai_category"], name: "index_journal_entries_on_ai_category"
+    t.index ["ai_mood_label"], name: "index_journal_entries_on_ai_mood_label"
     t.index ["discarded_at"], name: "index_journal_entries_on_discarded_at"
     t.index ["mood_rating"], name: "index_journal_entries_on_mood_rating"
     t.index ["user_id", "created_at"], name: "index_journal_entries_on_user_id_and_created_at"

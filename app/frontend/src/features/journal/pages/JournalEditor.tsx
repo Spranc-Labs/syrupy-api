@@ -9,6 +9,18 @@ interface JournalEntry {
   tags?: Tag[];
   created_at: string;
   updated_at: string;
+  // AI Insights fields
+  ai_analyzed?: boolean;
+  ai_analyzed_at?: string;
+  ai_category?: string;
+  ai_category_display?: string;
+  ai_emotions?: Record<string, number>;
+  ai_mood_emoji?: string;
+  ai_mood_label?: string;
+  ai_mood_score?: string;
+  ai_processing_time_ms?: string;
+  dominant_emotion?: string;
+  dominant_emotion_emoji?: string;
 }
 
 interface Tag {
@@ -71,8 +83,8 @@ export const JournalEditor: React.FC = () => {
         headers: getAuthHeaders(),
       });
       if (response.ok) {
-        const data = await response.json();
-        const entry = data.data;
+        const entry = await response.json();
+        console.log(entry, "++++ENTRU");
         setTitle(entry.title);
         setContent(entry.content);
         setSelectedTags(entry.tags || []);

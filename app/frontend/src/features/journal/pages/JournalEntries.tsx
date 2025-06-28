@@ -11,6 +11,18 @@ interface JournalEntry {
   updated_at: string;
   word_count?: number;
   search_rank?: number;
+  // AI Insights fields
+  ai_analyzed?: boolean;
+  ai_analyzed_at?: string;
+  ai_category?: string;
+  ai_category_display?: string;
+  ai_emotions?: Record<string, number>;
+  ai_mood_emoji?: string;
+  ai_mood_label?: string;
+  ai_mood_score?: string;
+  ai_processing_time_ms?: string;
+  dominant_emotion?: string;
+  dominant_emotion_emoji?: string;
 }
 
 interface Tag {
@@ -385,6 +397,75 @@ export const JournalEntries: React.FC = () => {
                       <span dangerouslySetInnerHTML={{ __html: highlightSearchTerms(tag.name, searchQuery) }} />
                     </span>
                   ))}
+                </div>
+              )}
+
+              {/* AI Insights */}
+              {entry.ai_analyzed && (
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">AI Insights</h4>
+                    {entry.ai_processing_time_ms && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400">
+                        {parseFloat(entry.ai_processing_time_ms).toFixed(0)}ms
+                      </span>
+                    )}
+                  </div>
+                  
+                  <div className="flex flex-wrap items-center gap-3">
+                    {/* Mood */}
+                    {entry.ai_mood_emoji && entry.ai_mood_label && (
+                      <div className="flex items-center space-x-1">
+                        <span className="text-lg">{entry.ai_mood_emoji}</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">
+                          {entry.ai_mood_label}
+                        </span>
+                        {entry.ai_mood_score && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            ({parseFloat(entry.ai_mood_score).toFixed(1)})
+                          </span>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Category */}
+                    {entry.ai_category_display && (
+                      <div className="flex items-center space-x-1">
+                        <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded">
+                          {entry.ai_category_display}
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Dominant Emotion */}
+                    {entry.dominant_emotion_emoji && entry.dominant_emotion && (
+                      <div className="flex items-center space-x-1">
+                        <span className="text-sm">{entry.dominant_emotion_emoji}</span>
+                        <span className="text-xs text-gray-600 dark:text-gray-400 capitalize">
+                          {entry.dominant_emotion}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Detailed Emotions */}
+                  {entry.ai_emotions && Object.keys(entry.ai_emotions).length > 0 && (
+                    <div className="mt-2">
+                      <div className="flex flex-wrap gap-1">
+                        {Object.entries(entry.ai_emotions)
+                          .sort(([,a], [,b]) => b - a)
+                          .slice(0, 3)
+                          .map(([emotion, score]) => (
+                            <span
+                              key={emotion}
+                              className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded"
+                            >
+                              {emotion}: {(score * 100).toFixed(0)}%
+                            </span>
+                          ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </article>

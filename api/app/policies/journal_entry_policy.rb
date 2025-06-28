@@ -19,6 +19,10 @@ class JournalEntryPolicy < ApplicationPolicy
     owner_or_admin?
   end
 
+  def analyze_ai?
+    owner_or_admin?
+  end
+
   class Scope < Scope
     def resolve
       scope.where(user: user)
