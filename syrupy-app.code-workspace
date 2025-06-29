@@ -3,13 +3,6 @@
 		{
 			"path": ".",
 			"name": "root"
-		},
-		{
-			"path": "api",
-			"name": "api"
-		},
-		{
-			"path": "../subble"
 		}
 	],
 	"settings": {

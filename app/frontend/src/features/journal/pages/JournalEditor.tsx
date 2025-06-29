@@ -130,11 +130,16 @@ export const JournalEditor: React.FC = () => {
       if (response.ok) {
         navigate('/journal');
       } else {
-        const errorData = await response.json();
-        setError(errorData.message || 'Failed to save entry');
+        const errorText = await response.text();
+        try {
+          const errorData = JSON.parse(errorText);
+          setError(errorData.message || JSON.stringify(errorData.errors) || 'Failed to save entry');
+        } catch {
+          setError(`Failed to save entry (${response.status}): ${errorText}`);
+        }
       }
     } catch (error) {
-      setError('Error saving entry');
+      setError('Error saving entry: ' + (error instanceof Error ? error.message : String(error)));
     } finally {
       setIsSaving(false);
     }

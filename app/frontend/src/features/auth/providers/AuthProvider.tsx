@@ -11,6 +11,7 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
+  isInitialLoad: boolean; // New prop
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, firstName?: string, lastName?: string) => Promise<void>;
   logout: () => void;
@@ -25,19 +26,20 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Changed initial state
+  const [isInitialLoad, setIsInitialLoad] = useState(true); // New state
 
   const API_BASE_URL = 'http://localhost:3000/api';
 
   useEffect(() => {
-    // Check if user is already logged in via session
     fetchCurrentUser();
   }, []);
 
   const fetchCurrentUser = async () => {
+    setIsInitialLoad(true);
     try {
       const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        credentials: 'include', // Important for session cookies
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -48,11 +50,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (data.success && data.user) {
           setUser(data.user);
         }
+      } else {
+        // It's okay if this fails, just means user is not logged in
+        setUser(null);
       }
     } catch (error) {
       console.error('Error fetching current user:', error);
+      setUser(null);
     } finally {
-      setIsLoading(false);
+      setIsInitialLoad(false);
     }
   };
 
@@ -61,7 +67,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
-        credentials: 'include', // Important for session cookies
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -85,7 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await fetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
-        credentials: 'include', // Important for session cookies
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -113,7 +119,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await fetch(`${API_BASE_URL}/auth/logout`, {
         method: 'DELETE',
-        credentials: 'include', // Important for session cookies
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -127,7 +133,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const value: AuthContextType = {
     user,
-    isLoading,
+    isLoading: isLoading,
+    isInitialLoad: isInitialLoad, // New prop
     login,
     register,
     logout,
