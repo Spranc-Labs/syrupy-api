@@ -9,7 +9,7 @@ interface JournalEntry {
   tags?: Tag[];
   created_at: string;
   updated_at: string;
-  // AI Insights fields
+  // Journal labeling fields
   ai_analyzed?: boolean;
   ai_analyzed_at?: string;
   ai_category?: string;

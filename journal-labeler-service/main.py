@@ -1,7 +1,7 @@
 """
-AI Insights Service - Modular Version
+Journal Labeler Service - Modular Version
 
-Entry point for the modular AI insights service.
+Entry point for the modular journal labeler service.
 """
 
 import logging

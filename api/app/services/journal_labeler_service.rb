@@ -1,15 +1,15 @@
-class AiInsightsService
+class JournalLabelerService
   include HTTParty
 
   default_timeout 30
   
   def self.base_uri
-    ENV.fetch('AI_INSIGHTS_SERVICE_URL', 'http://localhost:8001')
+    ENV.fetch('JOURNAL_LABELER_SERVICE_URL', 'http://localhost:8001')
   end
   
   class << self
     def analyze_journal_entry(title:, content:)
-      Rails.logger.info "Analyzing journal entry with AI insights service"
+      Rails.logger.info "Analyzing journal entry with journal labeler service"
       
       response = post("#{base_uri}/analyze", 
         body: {
@@ -24,16 +24,16 @@ class AiInsightsService
       if response.success?
         parse_analysis_response(response.parsed_response)
       else
-        Rails.logger.error "AI insights service error: #{response.code} - #{response.message}"
+        Rails.logger.error "Journal labeler service error: #{response.code} - #{response.message}"
         fallback_analysis(title: title, content: content)
       end
     rescue StandardError => e
-      Rails.logger.error "Failed to connect to AI insights service: #{e.message}"
+      Rails.logger.error "Failed to connect to journal labeler service: #{e.message}"
       fallback_analysis(title: title, content: content)
     end
 
     def predict_mood(title:, content:)
-      Rails.logger.info "Predicting mood with AI insights service"
+      Rails.logger.info "Predicting mood with journal labeler service"
       
       response = post("#{base_uri}/predict_mood", 
         body: {
@@ -57,7 +57,7 @@ class AiInsightsService
     end
 
     def predict_category(title:, content:)
-      Rails.logger.info "Predicting category with AI insights service"
+      Rails.logger.info "Predicting category with journal labeler service"
       
       response = post("#{base_uri}/predict_category", 
         body: {
@@ -137,7 +137,7 @@ class AiInsightsService
     end
 
     def fallback_analysis(title:, content:)
-      Rails.logger.warn "Using fallback analysis due to AI service unavailability"
+      Rails.logger.warn "Using fallback analysis due to journal labeler service unavailability"
       
       # Simple keyword-based fallback
       text = "#{title} #{content}".downcase

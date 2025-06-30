@@ -9,7 +9,7 @@ class JournalEntry < ApplicationRecord
   validates :content, presence: true
   validates :mood_rating, inclusion: { in: 1..10 }, allow_blank: true
 
-  # AI insights callbacks
+  # Journal labeling callbacks
   after_create :analyze_with_ai_async
   after_update :analyze_with_ai_async, if: :should_reanalyze?
 
@@ -80,9 +80,9 @@ class JournalEntry < ApplicationRecord
   end
 
   def analyze_with_ai!
-    Rails.logger.info "Analyzing journal entry #{id} with AI insights"
+    Rails.logger.info "Analyzing journal entry #{id} with journal labeler service"
     
-    analysis = AiInsightsService.analyze_journal_entry(
+    analysis = JournalLabelerService.analyze_journal_entry(
       title: title,
       content: content
     )
@@ -96,7 +96,7 @@ class JournalEntry < ApplicationRecord
       ai_analyzed_at: Time.current
     )
     
-    Rails.logger.info "AI analysis completed for journal entry #{id}"
+    Rails.logger.info "Journal labeling completed for journal entry #{id}"
     analysis
   rescue StandardError => e
     Rails.logger.error "Failed to analyze journal entry #{id}: #{e.message}"

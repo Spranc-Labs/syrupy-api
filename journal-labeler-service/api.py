@@ -19,10 +19,10 @@ async def lifespan(app: FastAPI):
     load_models()
     yield
     # Shutdown
-    logger.info("Shutting down AI insights service")
+    logger.info("Shutting down journal labeler service")
 
 app = FastAPI(
-    title="Syrupy AI Insights Service",
+    title="Syrupy Journal Labeler Service",
     description="AI-powered mood prediction and category labeling for journal entries",
     version="1.0.0",
     lifespan=lifespan
@@ -42,7 +42,7 @@ async def health_check():
     """Health check endpoint"""
     return {
         "status": "healthy",
-        "service": "ai-insights-service",
+        "service": "journal-labeler-service",
         "timestamp": datetime.utcnow().isoformat(),
         "models_loaded": is_model_loaded(),
         "bert_available": is_model_loaded()

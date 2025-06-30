@@ -58,8 +58,8 @@ module Api
 
     def ai_service_status
       status = {
-        service_available: AiInsightsService.health_check,
-        available_categories: AiInsightsService.available_categories,
+              service_available: JournalLabelerService.health_check,
+      available_categories: JournalLabelerService.available_categories,
         timestamp: Time.current.iso8601
       }
       

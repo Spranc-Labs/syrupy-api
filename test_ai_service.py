@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test script for the AI Insights Service
+Test script for the Journal Labeler Service
 """
 
 import requests
@@ -72,7 +72,7 @@ def test_analysis():
 
 def main():
     """Run all tests"""
-    print("=== AI Insights Service Test ===\n")
+    print("=== Journal Labeler Service Test ===\n")
     
     # Wait a bit for service to start
     print("Waiting for service to start...")

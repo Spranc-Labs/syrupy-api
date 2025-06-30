@@ -9,8 +9,8 @@ class AnalyzeJournalEntryJob < ApplicationJob
     Rails.logger.info "Starting AI analysis for journal entry #{journal_entry.id}"
     
     # Check if AI service is available
-    unless AiInsightsService.health_check
-      Rails.logger.warn "AI insights service is not available, skipping analysis for entry #{journal_entry.id}"
+    unless JournalLabelerService.health_check
+      Rails.logger.warn "Journal labeler service is not available, skipping analysis for entry #{journal_entry.id}"
       return
     end
     

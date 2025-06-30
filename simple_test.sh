@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "=== Testing AI Insights Service ==="
+echo "=== Testing Journal Labeler Service ==="
 echo
 
 # Wait for service to be ready

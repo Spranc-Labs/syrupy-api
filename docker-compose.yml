@@ -8,7 +8,7 @@ x-backend-common: &backend-common
     PIDFILE: /tmp/pids/server.pid
     GEM_HOME: /api-bundle
     HISTFILE: /root/hist/.bash_history
-    AI_INSIGHTS_SERVICE_URL: http://ai-insights-service
+    JOURNAL_LABELER_SERVICE_URL: http://journal-labeler-service
   tty: true
   stdin_open: true
   tmpfs:
@@ -33,7 +33,7 @@ services:
       - "3000:3000"
     shm_size: 4g
     depends_on:
-      ai-insights-service:
+      journal-labeler-service:
         condition: service_healthy
 
   good-job:
@@ -75,14 +75,14 @@ services:
       test: pg_isready -U postgres -h 127.0.0.1
       interval: 5s
 
-  ai-insights-service:
+  journal-labeler-service:
     build:
-      context: ./ai-insights-service
+      context: ./journal-labeler-service
       dockerfile: Dockerfile
     ports:
       - "8001:80"
     volumes:
-      - ./ai-insights-service:/app
+      - ./journal-labeler-service:/app
     environment:
       - PYTHONPATH=/app
     healthcheck:

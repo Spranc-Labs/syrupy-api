@@ -11,7 +11,7 @@ interface JournalEntry {
   updated_at: string;
   word_count?: number;
   search_rank?: number;
-  // AI Insights fields
+  // Journal labeling fields
   ai_analyzed?: boolean;
   ai_analyzed_at?: string;
   ai_category?: string;
@@ -434,11 +434,11 @@ export const JournalEntries: React.FC = () => {
                 </div>
               )}
 
-              {/* AI Insights */}
+                              {/* Journal Labels */}
               {entry.ai_analyzed && (
                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">AI Insights</h4>
+                    <h4 className="text-sm font-medium text-gray-900 dark:text-white">Journal Labels</h4>
                     <div className="flex items-center gap-3">
                       {/* Dominant Emotion */}
                       {entry.dominant_emotion_emoji && entry.dominant_emotion && (

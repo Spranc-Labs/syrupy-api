@@ -1,11 +1,11 @@
-# AI Insights Service - Modular Architecture
+# Journal Labeler Service - Modular Architecture
 
 This service has been refactored from a monolithic structure into a modular, scalable architecture while maintaining the exact same functionality, logic, and dependencies.
 
 ## 🏗️ Modular Structure
 
 ```
-ai-insights-service/
+journal-labeler-service/
 ├── main.py                      # Entry point (imports from api.py)
 ├── api.py                       # FastAPI app and all endpoints
 ├── models.py                    # Pydantic models (JournalEntry, MoodPrediction, etc.)
@@ -147,7 +147,7 @@ from services.category_prediction import predict_category
 
 ### Start the Service
 ```bash
-cd ai-insights-service
+cd journal-labeler-service
 python main.py
 ```
 

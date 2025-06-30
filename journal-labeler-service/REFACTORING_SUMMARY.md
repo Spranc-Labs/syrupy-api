@@ -1,13 +1,13 @@
-# AI Insights Service - Modular Refactoring Summary
+# Journal Labeler Service - Modular Refactoring Summary
 
 ## ✅ Refactoring Completed Successfully
 
-The AI Insights Service has been successfully refactored from a **monolithic 401-line file** into a **modular, scalable architecture** while preserving **100% of the original functionality**.
+The Journal Labeler Service has been successfully refactored from a **monolithic 401-line file** into a **modular, scalable architecture** while preserving **100% of the original functionality**.
 
 ## 📁 New Modular Structure
 
 ```
-ai-insights-service/
+journal-labeler-service/
 ├── main.py                      # Entry point (16 lines)
 ├── api.py                       # FastAPI app + endpoints (113 lines)
 ├── models.py                    # Pydantic models (20 lines)
@@ -107,7 +107,7 @@ from services.category_prediction import predict_category
 
 ### 1. **Start the Service**
 ```bash
-cd ai-insights-service
+cd journal-labeler-service
 python main.py
 # Service starts on http://localhost:8001
 ```
