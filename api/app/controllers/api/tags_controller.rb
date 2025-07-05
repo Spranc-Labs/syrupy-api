@@ -1,6 +1,20 @@
 class Api::TagsController < ApiController
   def index
     tags = policy_scope(Tag).all
+    
+    # Filter by kind if specified
+    tags = tags.where(kind: params[:kind]) if params[:kind].present?
+    
+    # Filter by text search if specified
+    tags = tags.filter_by_text(params[:search]) if params[:search].present?
+    
+    # Order by popularity for user tags, by name for system tags
+    if params[:kind] == 'user'
+      tags = tags.popular
+    else
+      tags = tags.order(:name)
+    end
+    
     render json: TagBlueprint.render(tags)
   end
 
@@ -42,6 +56,9 @@ class Api::TagsController < ApiController
   private
 
   def tag_params
-    params.require(:tag).permit(:name, :color)
+    permitted = params.require(:tag).permit(:name, :color, :kind)
+    # Default to 'user' kind if not specified
+    permitted[:kind] ||= 'user'
+    permitted
   end
 end 

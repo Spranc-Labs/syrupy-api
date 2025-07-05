@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/providers/AuthProvider';
+import { apiClient } from '../../../utils/apiClient';
 
 interface JournalEntry {
   id: number;
@@ -11,18 +12,35 @@ interface JournalEntry {
   updated_at: string;
   word_count?: number;
   search_rank?: number;
-  // Journal labeling fields
-  ai_analyzed?: boolean;
-  ai_analyzed_at?: string;
-  ai_category?: string;
-  ai_category_display?: string;
-  ai_emotions?: Record<string, number>;
-  ai_mood_emoji?: string;
-  ai_mood_label?: string;
-  ai_mood_score?: string;
-  ai_processing_time_ms?: string;
-  dominant_emotion?: string;
-  dominant_emotion_emoji?: string;
+  formatted_date?: string;
+  // Analysis fields from API response
+  'analyzed?'?: boolean;
+  analyzed?: boolean;
+  current_category?: string;
+  category_display?: string;
+  primary_emotion?: string;
+  primary_emotion_emoji?: string;
+  journal_label_analysis?: {
+    id: number;
+    analysis_model: string;
+    analyzed_at: string;
+    created_at: string;
+    model_version: string;
+    payload: { category: string };
+    run_ms: number;
+    updated_at: string;
+  };
+  emotion_label_analysis?: {
+    id: number;
+    analysis_model: string;
+    analyzed_at: string;
+    created_at: string;
+    model_version: string;
+    payload: Record<string, number>;
+    run_ms: number;
+    top_emotion: string;
+    updated_at: string;
+  };
 }
 
 interface Tag {
@@ -41,8 +59,6 @@ export const JournalEntries: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState<string>('');
   const { user } = useAuth();
-
-  const API_BASE_URL = 'http://localhost:3000/api';
 
   // Get the current entries to display (either all entries or search results)
   const displayEntries = useMemo(() => {
@@ -77,25 +93,12 @@ export const JournalEntries: React.FC = () => {
     }
   }, [searchQuery]);
 
-  const getAuthHeaders = () => ({
-    'Content-Type': 'application/json',
-  });
-
   const fetchAllEntries = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/journal_entries`, {
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const entries = data.data?.items || data;
-        setAllEntries(entries);
-      } else {
-        setError('Failed to fetch entries');
-      }
+      const data = await apiClient.get('/journal_entries');
+      const entries = data.data?.items || data;
+      setAllEntries(entries);
     } catch (error) {
       setError('Error fetching entries');
     } finally {
@@ -111,18 +114,9 @@ export const JournalEntries: React.FC = () => {
       const params = new URLSearchParams();
       params.append('q', searchQuery.trim());
 
-      const response = await fetch(`${API_BASE_URL}/journal_entries?${params}`, {
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        const entries = data.data?.items || data;
-        setSearchResults(entries);
-      } else {
-        setError('Failed to search entries');
-      }
+      const data = await apiClient.get(`/journal_entries?${params}`);
+      const entries = data.data?.items || data;
+      setSearchResults(entries);
     } catch (error) {
       setError('Error searching entries');
     } finally {
@@ -132,14 +126,8 @@ export const JournalEntries: React.FC = () => {
 
   const fetchTags = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tags`, {
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableTags(data.data || data);
-      }
+      const data = await apiClient.get('/tags');
+      setAvailableTags(data.data || data);
     } catch (error) {
       console.error('Error fetching tags:', error);
     }
@@ -149,19 +137,11 @@ export const JournalEntries: React.FC = () => {
     if (!confirm('Are you sure you want to delete this entry?')) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/journal_entries/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-
-      if (response.ok) {
-        // Remove from both allEntries and searchResults
-        setAllEntries(prev => prev.filter(entry => entry.id !== id));
-        setSearchResults(prev => prev.filter(entry => entry.id !== id));
-      } else {
-        setError('Failed to delete entry');
-      }
+      await apiClient.delete(`/journal_entries/${id}`);
+      
+      // Remove from both allEntries and searchResults
+      setAllEntries(prev => prev.filter(entry => entry.id !== id));
+      setSearchResults(prev => prev.filter(entry => entry.id !== id));
     } catch (error) {
       setError('Error deleting entry');
     }
@@ -356,24 +336,19 @@ export const JournalEntries: React.FC = () => {
                       </span>
                     )}
                     {/* Mood */}
-                    {entry.ai_mood_emoji && entry.ai_mood_label && (
+                    {entry.primary_emotion_emoji && entry.primary_emotion && (
                       <div className="flex items-center space-x-1">
-                        <span className="text-lg">{entry.ai_mood_emoji}</span>
+                        <span className="text-lg">{entry.primary_emotion_emoji}</span>
                         <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">
-                          {entry.ai_mood_label}
+                          {entry.primary_emotion}
                         </span>
-                        {entry.ai_mood_score && (
-                          <span className="text-xs text-gray-500 dark:text-gray-400">
-                            ({parseFloat(entry.ai_mood_score).toFixed(1)})
-                          </span>
-                        )}
                       </div>
                     )}
                     {/* Category */}
-                    {entry.ai_category_display && (
+                    {entry.category_display && (
                       <div className="flex items-center space-x-1">
                         <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-1 rounded-full">
-                          {entry.ai_category_display}
+                          {entry.category_display}
                         </span>
                       </div>
                     )}
@@ -405,7 +380,7 @@ export const JournalEntries: React.FC = () => {
               </div>
 
               {/* Tags and Emotions */}
-              {(entry.tags && entry.tags.length > 0 || entry.ai_emotions && Object.keys(entry.ai_emotions).length > 0) && (
+              {(entry.tags && entry.tags.length > 0 || entry.emotion_label_analysis && Object.keys(entry.emotion_label_analysis.payload).length > 0) && (
                 <div className="flex flex-wrap gap-2 mt-4">
                   {entry.tags?.map((tag) => (
                     <span
@@ -419,7 +394,7 @@ export const JournalEntries: React.FC = () => {
                       <span dangerouslySetInnerHTML={{ __html: highlightSearchTerms(tag.name, searchQuery) }} />
                     </span>
                   ))}
-                  {entry.ai_emotions && Object.entries(entry.ai_emotions)
+                  {entry.emotion_label_analysis && Object.entries(entry.emotion_label_analysis.payload)
                     .sort(([,a], [,b]) => b - a)
                     .slice(0, 5)
                     .map(([emotion, score]) => (
@@ -435,24 +410,19 @@ export const JournalEntries: React.FC = () => {
               )}
 
                               {/* Journal Labels */}
-              {entry.ai_analyzed && (
+              {(entry.analyzed || entry['analyzed?']) && (
                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                   <div className="flex items-center justify-between">
                     <h4 className="text-sm font-medium text-gray-900 dark:text-white">Journal Labels</h4>
                     <div className="flex items-center gap-3">
                       {/* Dominant Emotion */}
-                      {entry.dominant_emotion_emoji && entry.dominant_emotion && (
-                        <div className="flex items-center space-x-1">
-                          <span className="text-sm">{entry.dominant_emotion_emoji}</span>
-                          <span className="text-xs text-gray-600 dark:text-gray-400 capitalize">
-                            {entry.dominant_emotion}
+                      {entry.primary_emotion_emoji && entry.primary_emotion && (
+                        <div className="flex items-center space-x-2 bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded-full">
+                          <span className="text-sm">{entry.primary_emotion_emoji}</span>
+                          <span className="text-xs font-medium text-gray-600 dark:text-gray-300">
+                            {entry.primary_emotion}
                           </span>
                         </div>
-                      )}
-                      {entry.ai_processing_time_ms && (
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {parseFloat(entry.ai_processing_time_ms).toFixed(0)}ms
-                        </span>
                       )}
                     </div>
                   </div>

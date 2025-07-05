@@ -113,6 +113,9 @@ gem "activerecord-import"
 gem "faraday"
 gem "httparty"
 
+# For JWT token authentication
+gem "jwt"
+
 # For generating random strings
 gem "securerandom"
 

@@ -1,4 +1,7 @@
-class Api::AuthController < ApplicationController
+class Api::AuthController < ApiController
+  skip_before_action :authenticate_user!, only: [:register, :login, :refresh]
+  skip_after_action :verify_authorized
+  skip_after_action :verify_policy_scoped
   # POST /api/auth/register
   def register
     @account = Account.new(account_params)
@@ -12,13 +15,16 @@ class Api::AuthController < ApplicationController
       )
       
       # Auto-login after registration
-      session[:account_id] = @account.id
+      access_token = JwtService.encode(account_id: @account.id)
+      refresh_token = JwtService.encode_refresh_token(account_id: @account.id)
       Current.user = @user
       
       render json: {
         success: true,
         message: "Account created successfully",
-        user: UserBlueprint.render_as_hash(@user)
+        user: UserBlueprint.render_as_hash(@user),
+        access_token: access_token,
+        refresh_token: refresh_token
       }, status: :created
     else
       render json: {
@@ -33,13 +39,16 @@ class Api::AuthController < ApplicationController
     @account = Account.find_by(email: params[:email]&.downcase)
     
     if @account&.authenticate(params[:password])
-      session[:account_id] = @account.id
+      access_token = JwtService.encode(account_id: @account.id)
+      refresh_token = JwtService.encode_refresh_token(account_id: @account.id)
       Current.user = @account.user
       
       render json: {
         success: true,
         message: "Logged in successfully",
-        user: UserBlueprint.render_as_hash(@account.user)
+        user: UserBlueprint.render_as_hash(@account.user),
+        access_token: access_token,
+        refresh_token: refresh_token
       }
     else
       render json: {
@@ -75,6 +84,33 @@ class Api::AuthController < ApplicationController
     end
   end
 
+  # POST /api/auth/refresh
+  def refresh
+    refresh_token = params[:refresh_token]
+    
+    if refresh_token.blank?
+      render json: {
+        success: false,
+        message: "Refresh token is required"
+      }, status: :bad_request
+      return
+    end
+
+    new_access_token = JwtService.refresh_access_token(refresh_token)
+    
+    if new_access_token
+      render json: {
+        success: true,
+        access_token: new_access_token
+      }
+    else
+      render json: {
+        success: false,
+        message: "Invalid or expired refresh token"
+      }, status: :unauthorized
+    end
+  end
+
   private
 
   def account_params
@@ -85,20 +121,5 @@ class Api::AuthController < ApplicationController
     }
   end
 
-  def authenticate_user!
-    unless current_user
-      render json: {
-        success: false,
-        message: "Authentication required"
-      }, status: :unauthorized
-    end
-  end
 
-  def current_user
-    return Current.user if Current.user
-    return nil unless session[:account_id]
-    
-    account = Account.find_by(id: session[:account_id])
-    Current.user = account&.user
-  end
 end 

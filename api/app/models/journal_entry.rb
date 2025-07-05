@@ -5,9 +5,22 @@ class JournalEntry < ApplicationRecord
   has_many :journal_entry_tags, dependent: :destroy
   has_many :tags, through: :journal_entry_tags
 
+  # New analysis associations
+  belongs_to :emotion_label_analysis,
+             class_name:  "EmotionLabelAnalysis",
+             optional:    true,
+             foreign_key: :emotion_label_analysis_id
+
+  belongs_to :journal_label_analysis,
+             class_name:  "JournalLabelAnalysis",
+             optional:    true,
+             foreign_key: :journal_label_analysis_id
+
+  has_many :emotion_label_analyses,  dependent: :destroy
+  has_many :journal_label_analyses,  dependent: :destroy
+
   validates :title, presence: true
   validates :content, presence: true
-  validates :mood_rating, inclusion: { in: 1..10 }, allow_blank: true
 
   # Journal labeling callbacks
   after_create :analyze_with_ai_async
@@ -47,9 +60,7 @@ class JournalEntry < ApplicationRecord
       .order("search_rank DESC, created_at DESC")
   }
 
-  scope :by_mood_range, ->(min, max) {
-    where(mood_rating: min..max) if min.present? && max.present?
-  }
+
 
   scope :by_ai_mood_range, ->(min, max) {
     where(ai_mood_score: min..max) if min.present? && max.present?
@@ -65,7 +76,7 @@ class JournalEntry < ApplicationRecord
 
   scope :recent, -> { order(created_at: :desc) }
 
-  scope :ai_analyzed, -> { where.not(ai_analyzed_at: nil) }
+  scope :analyzed, -> { where.not(emotion_label_analysis_id: nil, journal_label_analysis_id: nil) }
 
   def formatted_date
     created_at.strftime("%B %d, %Y")
@@ -75,8 +86,8 @@ class JournalEntry < ApplicationRecord
     content.split.size
   end
 
-  def ai_analyzed?
-    ai_analyzed_at.present?
+  def analyzed?
+    emotion_label_analysis.present? && journal_label_analysis.present?
   end
 
   def analyze_with_ai!
@@ -87,14 +98,33 @@ class JournalEntry < ApplicationRecord
       content: content
     )
     
-    update!(
-      ai_mood_score: analysis[:mood_score],
-      ai_mood_label: analysis[:mood_label],
-      ai_category: analysis[:category],
-      ai_emotions: analysis[:emotions],
-      ai_processing_time_ms: analysis[:processing_time_ms],
-      ai_analyzed_at: Time.current
+    # Create emotion analysis
+    emotion_analysis = emotion_label_analyses.create!(
+      analysis_model: 'emotion_classifier',
+      model_version: '1.0',
+      payload: analysis[:emotions] || {},
+      top_emotion: analysis[:mood_label],
+      run_ms: analysis[:processing_time_ms],
+      analyzed_at: Time.current
     )
+    
+    # Create journal analysis  
+    journal_analysis = journal_label_analyses.create!(
+      analysis_model: 'category_classifier',
+      model_version: '1.0', 
+      payload: { category: analysis[:category] },
+      run_ms: analysis[:processing_time_ms],
+      analyzed_at: Time.current
+    )
+    
+    # Link the latest analyses to this journal entry
+    update!(
+      emotion_label_analysis: emotion_analysis,
+      journal_label_analysis: journal_analysis
+    )
+    
+    # Create system tags from analysis
+    create_system_tags_from_analysis(analysis)
     
     Rails.logger.info "Journal labeling completed for journal entry #{id}"
     analysis
@@ -103,28 +133,21 @@ class JournalEntry < ApplicationRecord
     nil
   end
 
-  def ai_mood_emoji
-    case ai_mood_label
-    when 'very positive' then '😄'
-    when 'positive' then '😊'
-    when 'neutral' then '😐'
-    when 'negative' then '😔'
-    when 'very negative' then '😢'
-    else '❓'
-    end
+  def current_category
+    journal_label_analysis&.payload&.dig('category')
   end
 
-  def ai_category_display
-    ai_category&.humanize || 'Unknown'
+  def category_display
+    current_category&.humanize || 'Unknown'
   end
 
-  def dominant_emotion
-    return nil unless ai_emotions.is_a?(Hash) && ai_emotions.any?
+  def primary_emotion
+    return nil unless emotion_label_analysis&.payload&.is_a?(Hash)
     
-    ai_emotions.max_by { |_, score| score }&.first
+    emotion_label_analysis.payload.max_by { |_, score| score }&.first
   end
 
-  def dominant_emotion_emoji
+  def primary_emotion_emoji
     emotion_emojis = {
       'joy' => '😄', 'happiness' => '😊', 'love' => '❤️',
       'sadness' => '😢', 'anger' => '😠', 'fear' => '😨',
@@ -132,7 +155,7 @@ class JournalEntry < ApplicationRecord
       'trust' => '🤗', 'optimism' => '🌟', 'pessimism' => '😞'
     }
     
-    emotion = dominant_emotion
+    emotion = primary_emotion
     emotion_emojis[emotion] || '❓'
   end
 
@@ -145,8 +168,65 @@ class JournalEntry < ApplicationRecord
 
   def analyze_with_ai_async
     # Use background job for AI analysis to avoid blocking the request
-    AnalyzeJournalEntryJob.perform_later(self)
+    AnalyzeJournalEntryJob.perform_later(id)
   end
+
+  def create_system_tags_from_analysis(analysis)
+    return unless analysis
+
+    system_tags_to_create = []
+    
+    # Add category as a system tag
+    if analysis[:category].present?
+      system_tags_to_create << {
+        name: analysis[:category].humanize.downcase,
+        color: category_color(analysis[:category])
+      }
+    end
+    
+    # Add subcategories as system tags if they exist
+    if analysis[:subcategories]&.any?
+      analysis[:subcategories].each do |subcategory|
+        system_tags_to_create << {
+          name: subcategory.humanize.downcase,
+          color: category_color(subcategory)
+        }
+      end
+    end
+    
+
+    
+    # Create or find system tags and associate them
+    system_tags_to_create.uniq.each do |tag_data|
+      tag = Tag.find_or_create_by(
+        name: tag_data[:name],
+        kind: 'system'
+      ) do |new_tag|
+        new_tag.color = tag_data[:color]
+      end
+      
+      # Associate the tag with this journal entry if not already associated
+      tags << tag unless tags.include?(tag)
+    end
+  end
+
+  def category_color(category)
+    color_map = {
+      'personal_growth' => '#10b981',    # green
+      'relationships' => '#f59e0b',      # amber
+      'work_career' => '#3b82f6',        # blue
+      'health_wellness' => '#ef4444',    # red
+      'travel_adventure' => '#8b5cf6',   # violet
+      'daily_life' => '#6b7280',         # gray
+      'emotions_feelings' => '#ec4899',  # pink
+      'hobbies_interests' => '#f97316',  # orange
+      'spirituality' => '#06b6d4',       # cyan
+      'challenges_struggles' => '#7c3aed' # purple
+    }
+    color_map[category] || '#6b7280'
+  end
+
+
 
   def self.search_rank_sql(terms)
     # Calculate relevance score based on:

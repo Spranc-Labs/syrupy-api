@@ -4,6 +4,7 @@ class TagBlueprint < ApplicationBlueprint
   fields(
     :name,
     :color,
+    :kind,
     :created_at,
     :updated_at,
     :discarded_at,

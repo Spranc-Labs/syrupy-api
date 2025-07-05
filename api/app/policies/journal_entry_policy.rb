@@ -19,8 +19,16 @@ class JournalEntryPolicy < ApplicationPolicy
     owner_or_admin?
   end
 
-  def analyze_ai?
+  def analyze?
     owner_or_admin?
+  end
+
+  def emotion_stats?
+    true
+  end
+
+  def category_stats?
+    true
   end
 
   class Scope < Scope

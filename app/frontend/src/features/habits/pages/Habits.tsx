@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/providers/AuthProvider';
+import { apiClient } from '../../../utils/apiClient';
 
 interface Habit {
   id: number;
@@ -23,29 +24,15 @@ export const Habits: React.FC = () => {
   });
   const [error, setError] = useState('');
 
-  const API_BASE_URL = 'http://localhost:3000/api';
-
   useEffect(() => {
     fetchHabits();
   }, []);
 
-  const getAuthHeaders = () => ({
-    'Content-Type': 'application/json',
-  });
-
   const fetchHabits = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/habits`, {
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        // Handle paginated response format
-        setHabits(data.data || data);
-      } else {
-        setError('Failed to fetch habits');
-      }
+      const data = await apiClient.get('/habits');
+      // Handle paginated response format or direct array
+      setHabits(data.data?.items || data.data || data);
     } catch (error) {
       setError('Error fetching habits');
     } finally {
@@ -58,27 +45,18 @@ export const Habits: React.FC = () => {
     setError('');
 
     try {
-      const url = editingHabit 
-        ? `${API_BASE_URL}/habits/${editingHabit.id}`
-        : `${API_BASE_URL}/habits`;
+      const payload = { habit: formData };
       
-      const method = editingHabit ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        credentials: 'include',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ habit: formData }),
-      });
-
-      if (response.ok) {
-        await fetchHabits();
-        setIsFormOpen(false);
-        setEditingHabit(null);
-        setFormData({ name: '', description: '', frequency: 'daily', active: true });
+      if (editingHabit) {
+        await apiClient.put(`/habits/${editingHabit.id}`, payload);
       } else {
-        setError('Failed to save habit');
+        await apiClient.post('/habits', payload);
       }
+
+      await fetchHabits();
+      setIsFormOpen(false);
+      setEditingHabit(null);
+      setFormData({ name: '', description: '', frequency: 'daily', active: true });
     } catch (error) {
       setError('Error saving habit');
     }
@@ -99,17 +77,8 @@ export const Habits: React.FC = () => {
     if (!confirm('Are you sure you want to delete this habit?')) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/habits/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-
-      if (response.ok) {
-        await fetchHabits();
-      } else {
-        setError('Failed to delete habit');
-      }
+      await apiClient.delete(`/habits/${id}`);
+      await fetchHabits();
     } catch (error) {
       setError('Error deleting habit');
     }

@@ -40,15 +40,121 @@ if Rails.env.development?
     )
   end
 
-  # Create sample journal entry
+  # Create sample journal entries with emotion analysis
   if demo_user.journal_entries.empty?
-    puts "Creating sample journal entry..."
-    entry = demo_user.journal_entries.create!(
+    puts "Creating sample journal entries..."
+    
+    # Entry 1: Positive reflection
+    entry1 = demo_user.journal_entries.create!(
       title: "My First Journal Entry",
-      content: "Today I'm starting my journaling journey with Syrupy. I'm excited to track my thoughts, moods, and goals over time. This platform will help me practice stoic principles and turn self-reflection into actionable insights.",
-      mood_rating: 8
+      content: "Today I'm starting my journaling journey with Syrupy. I'm excited to track my thoughts, moods, and goals over time. This platform will help me practice stoic principles and turn self-reflection into actionable insights."
     )
-    entry.tags << [gratitude_tag, reflection_tag]
+    entry1.tags << [gratitude_tag, reflection_tag]
+    
+    # Create emotion analysis for entry1
+    emotion_analysis1 = entry1.emotion_label_analyses.create!(
+      model_name: 'emotion_classifier',
+      model_version: '1.0',
+      payload: { 'happiness' => 0.8, 'excitement' => 0.7, 'optimism' => 0.6 },
+      top_emotion: 'happiness',
+      run_ms: 150,
+      analyzed_at: Time.current
+    )
+    
+    journal_analysis1 = entry1.journal_label_analyses.create!(
+      model_name: 'category_classifier', 
+      model_version: '1.0',
+      payload: { 'category' => 'personal_growth' },
+      run_ms: 120,
+      analyzed_at: Time.current
+    )
+    
+    entry1.update!(
+      emotion_label_analysis: emotion_analysis1,
+      journal_label_analysis: journal_analysis1
+    )
+    
+    # Entry 2: Challenging day
+    entry2 = demo_user.journal_entries.create!(
+      title: "Dealing with Stress",
+      content: "Today was particularly challenging at work. Multiple deadlines converging and feeling overwhelmed. However, I'm trying to apply stoic principles - focusing on what I can control and accepting what I cannot. This too shall pass.",
+      created_at: 1.day.ago
+    )
+    entry2.tags << [reflection_tag]
+    
+    emotion_analysis2 = entry2.emotion_label_analyses.create!(
+      model_name: 'emotion_classifier',
+      model_version: '1.0', 
+      payload: { 'stress' => 0.7, 'determination' => 0.5, 'acceptance' => 0.4 },
+      top_emotion: 'stress',
+      run_ms: 180,
+      analyzed_at: 1.day.ago
+    )
+    
+    journal_analysis2 = entry2.journal_label_analyses.create!(
+      model_name: 'category_classifier',
+      model_version: '1.0',
+      payload: { 'category' => 'work_stress' },
+      run_ms: 140,
+      analyzed_at: 1.day.ago
+    )
+    
+    entry2.update!(
+      emotion_label_analysis: emotion_analysis2,
+      journal_label_analysis: journal_analysis2
+    )
+    
+    # Entry 3: Gratitude focus
+    entry3 = demo_user.journal_entries.create!(
+      title: "Gratitude Practice",
+      content: "Taking time to appreciate the good things in my life. Grateful for my health, supportive family, and the opportunity to grow. Sometimes it's easy to focus on what's missing rather than what's present.",
+      created_at: 2.days.ago
+    )
+    entry3.tags << [gratitude_tag, daily_tag]
+    
+    emotion_analysis3 = entry3.emotion_label_analyses.create!(
+      model_name: 'emotion_classifier',
+      model_version: '1.0',
+      payload: { 'gratitude' => 0.9, 'contentment' => 0.7, 'peace' => 0.6 },
+      top_emotion: 'gratitude',
+      run_ms: 160,
+      analyzed_at: 2.days.ago
+    )
+    
+    journal_analysis3 = entry3.journal_label_analyses.create!(
+      model_name: 'category_classifier',
+      model_version: '1.0',
+      payload: { 'category' => 'gratitude_practice' },
+      run_ms: 130,
+      analyzed_at: 2.days.ago
+    )
+    
+    entry3.update!(
+      emotion_label_analysis: emotion_analysis3,
+      journal_label_analysis: journal_analysis3
+    )
+  end
+
+  # Create emotion logs
+  if demo_user.emotion_logs.empty?
+    puts "Creating sample emotion logs..."
+    
+    emotions_data = [
+      { emotion: 'happy', emoji: '😊', note: 'Great start to the day!', time: Time.current },
+      { emotion: 'content', emoji: '😌', note: 'Feeling peaceful after meditation', time: 3.hours.ago },
+      { emotion: 'grateful', emoji: '🙏', note: 'Thankful for family time', time: 1.day.ago },
+      { emotion: 'anxious', emoji: '😰', note: 'Worried about upcoming presentation', time: 2.days.ago },
+      { emotion: 'excited', emoji: '🤩', note: 'Looking forward to weekend plans', time: 3.days.ago }
+    ]
+    
+    emotions_data.each do |emotion_data|
+      demo_user.emotion_logs.create!(
+        emotion_label: emotion_data[:emotion],
+        emoji: emotion_data[:emoji],
+        note: emotion_data[:note],
+        captured_at: emotion_data[:time]
+      )
+    end
   end
 
   # Create sample goals

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/providers/AuthProvider';
+import { apiClient } from '../../../utils/apiClient';
 
 interface Goal {
   id: number;
@@ -25,29 +26,15 @@ export const Goals: React.FC = () => {
   });
   const [error, setError] = useState('');
 
-  const API_BASE_URL = 'http://localhost:3000/api';
-
   useEffect(() => {
     fetchGoals();
   }, []);
 
-  const getAuthHeaders = () => ({
-    'Content-Type': 'application/json',
-  });
-
   const fetchGoals = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/goals`, {
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        // Handle paginated response format
-        setGoals(data.data || data);
-      } else {
-        setError('Failed to fetch goals');
-      }
+      const data = await apiClient.get('/goals');
+      // Handle paginated response format or direct array
+      setGoals(data.data?.items || data.data || data);
     } catch (error) {
       setError('Error fetching goals');
     } finally {
@@ -60,27 +47,16 @@ export const Goals: React.FC = () => {
     setError('');
 
     try {
-      const url = editingGoal 
-        ? `${API_BASE_URL}/goals/${editingGoal.id}`
-        : `${API_BASE_URL}/goals`;
-      
-      const method = editingGoal ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        credentials: 'include',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(formData),
-      });
-
-      if (response.ok) {
-        await fetchGoals();
-        setIsFormOpen(false);
-        setEditingGoal(null);
-        setFormData({ title: '', description: '', target_date: '', status: 'active', priority: 'medium' });
+      if (editingGoal) {
+        await apiClient.put(`/goals/${editingGoal.id}`, formData);
       } else {
-        setError('Failed to save goal');
+        await apiClient.post('/goals', formData);
       }
+
+      await fetchGoals();
+      setIsFormOpen(false);
+      setEditingGoal(null);
+      setFormData({ title: '', description: '', target_date: '', status: 'active', priority: 'medium' });
     } catch (error) {
       setError('Error saving goal');
     }
@@ -102,17 +78,8 @@ export const Goals: React.FC = () => {
     if (!confirm('Are you sure you want to delete this goal?')) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/goals/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-
-      if (response.ok) {
-        await fetchGoals();
-      } else {
-        setError('Failed to delete goal');
-      }
+      await apiClient.delete(`/goals/${id}`);
+      await fetchGoals();
     } catch (error) {
       setError('Error deleting goal');
     }

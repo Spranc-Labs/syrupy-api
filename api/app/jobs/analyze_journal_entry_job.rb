@@ -3,8 +3,9 @@ class AnalyzeJournalEntryJob < ApplicationJob
   
   retry_on StandardError, wait: :exponentially_longer, attempts: 3
 
-  def perform(journal_entry)
-    return unless journal_entry.persisted?
+  def perform(journal_entry_id)
+    journal_entry = JournalEntry.find_by(id: journal_entry_id)
+    return unless journal_entry&.persisted?
     
     Rails.logger.info "Starting AI analysis for journal entry #{journal_entry.id}"
     

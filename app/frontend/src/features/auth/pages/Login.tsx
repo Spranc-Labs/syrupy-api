@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider';
 
 export const Login: React.FC = () => {
-  const [email, setEmail] = useState('demo@syrupy.com');
+  const [email, setEmail] = useState('test@example.com');
   const [password, setPassword] = useState('password123');
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -96,7 +96,7 @@ export const Login: React.FC = () => {
 
           <div className="text-sm text-gray-600 dark:text-gray-400 text-center">
             <p>Demo credentials:</p>
-            <p>Email: demo@syrupy.com</p>
+            <p>Email: test@example.com</p>
             <p>Password: password123</p>
           </div>
         </form>

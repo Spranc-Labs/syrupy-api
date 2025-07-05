@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_06_28_122254) do
+ActiveRecord::Schema[7.1].define(version: 2025_06_30_162910) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "plpgsql"
@@ -88,6 +88,39 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_28_122254) do
     t.index ["created_at"], name: "index_audits_on_created_at"
     t.index ["request_uuid"], name: "index_audits_on_request_uuid"
     t.index ["user_id", "user_type"], name: "user_index"
+  end
+
+  create_table "emotion_label_analyses", force: :cascade do |t|
+    t.bigint "journal_entry_id", null: false
+    t.string "analysis_model", null: false
+    t.string "model_version", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.string "top_emotion"
+    t.integer "run_ms"
+    t.datetime "analyzed_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "discarded_at"
+    t.index ["analyzed_at"], name: "index_emotion_label_analyses_on_analyzed_at"
+    t.index ["discarded_at"], name: "index_emotion_label_analyses_on_discarded_at"
+    t.index ["journal_entry_id"], name: "index_emotion_label_analyses_on_journal_entry_id"
+    t.index ["top_emotion"], name: "index_emotion_label_analyses_on_top_emotion"
+  end
+
+  create_table "emotion_logs", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.integer "emotion_label", null: false
+    t.string "emoji"
+    t.text "note"
+    t.datetime "captured_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "discarded_at"
+    t.index ["captured_at"], name: "index_emotion_logs_on_captured_at"
+    t.index ["discarded_at"], name: "index_emotion_logs_on_discarded_at"
+    t.index ["emotion_label"], name: "index_emotion_logs_on_emotion_label"
+    t.index ["user_id", "captured_at"], name: "index_emotion_logs_on_user_id_and_captured_at"
+    t.index ["user_id"], name: "index_emotion_logs_on_user_id"
   end
 
   create_table "goals", force: :cascade do |t|
@@ -231,23 +264,34 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_28_122254) do
     t.bigint "user_id", null: false
     t.string "title", null: false
     t.text "content", null: false
-    t.integer "mood_rating"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "discarded_at"
-    t.string "mood"
-    t.decimal "ai_mood_score", precision: 5, scale: 3
-    t.string "ai_mood_label"
-    t.string "ai_category"
-    t.text "ai_emotions"
-    t.decimal "ai_processing_time_ms", precision: 8, scale: 2
-    t.datetime "ai_analyzed_at", precision: nil
-    t.index ["ai_category"], name: "index_journal_entries_on_ai_category"
-    t.index ["ai_mood_label"], name: "index_journal_entries_on_ai_mood_label"
+    t.bigint "emotion_label_analysis_id"
+    t.bigint "journal_label_analysis_id"
     t.index ["discarded_at"], name: "index_journal_entries_on_discarded_at"
-    t.index ["mood_rating"], name: "index_journal_entries_on_mood_rating"
+    t.index ["emotion_label_analysis_id"], name: "index_journal_entries_on_emotion_label_analysis_id"
+    t.index ["journal_label_analysis_id"], name: "index_journal_entries_on_journal_label_analysis_id"
     t.index ["user_id", "created_at"], name: "index_journal_entries_on_user_id_and_created_at"
     t.index ["user_id"], name: "index_journal_entries_on_user_id"
+  end
+
+  create_table "journal_entry_insights", force: :cascade do |t|
+    t.bigint "journal_entry_id", null: false
+    t.boolean "ai_analyzed", default: false, null: false
+    t.datetime "ai_analyzed_at", precision: nil
+    t.float "ai_processing_time_ms"
+    t.string "ai_mood_label"
+    t.float "ai_mood_score"
+    t.string "ai_mood_emoji"
+    t.jsonb "ai_emotions", default: {}, null: false
+    t.string "dominant_emotion"
+    t.string "dominant_emotion_emoji"
+    t.string "ai_category"
+    t.string "ai_category_display"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["journal_entry_id"], name: "index_journal_entry_insights_on_journal_entry_id", unique: true
   end
 
   create_table "journal_entry_tags", force: :cascade do |t|
@@ -258,6 +302,21 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_28_122254) do
     t.index ["journal_entry_id", "tag_id"], name: "index_journal_entry_tags_on_journal_entry_id_and_tag_id", unique: true
     t.index ["journal_entry_id"], name: "index_journal_entry_tags_on_journal_entry_id"
     t.index ["tag_id"], name: "index_journal_entry_tags_on_tag_id"
+  end
+
+  create_table "journal_label_analyses", force: :cascade do |t|
+    t.bigint "journal_entry_id", null: false
+    t.string "analysis_model", null: false
+    t.string "model_version", null: false
+    t.jsonb "payload", default: {}, null: false
+    t.integer "run_ms"
+    t.datetime "analyzed_at", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "discarded_at"
+    t.index ["analyzed_at"], name: "index_journal_label_analyses_on_analyzed_at"
+    t.index ["discarded_at"], name: "index_journal_label_analyses_on_discarded_at"
+    t.index ["journal_entry_id"], name: "index_journal_label_analyses_on_journal_entry_id"
   end
 
   create_table "mood_logs", force: :cascade do |t|
@@ -281,8 +340,10 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_28_122254) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "discarded_at"
+    t.string "kind", default: "user", null: false
     t.index ["discarded_at"], name: "index_tags_on_discarded_at"
-    t.index ["name"], name: "index_tags_on_name", unique: true
+    t.index ["kind"], name: "index_tags_on_kind"
+    t.index ["name", "kind"], name: "index_tags_on_name_and_kind", unique: true
   end
 
   create_table "users", force: :cascade do |t|
@@ -306,13 +367,19 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_28_122254) do
   add_foreign_key "account_password_reset_keys", "accounts", column: "id"
   add_foreign_key "account_remember_keys", "accounts", column: "id"
   add_foreign_key "account_verification_keys", "accounts", column: "id"
+  add_foreign_key "emotion_label_analyses", "journal_entries"
+  add_foreign_key "emotion_logs", "users"
   add_foreign_key "goals", "users"
   add_foreign_key "habit_logs", "habits"
   add_foreign_key "habit_logs", "users"
   add_foreign_key "habits", "users"
+  add_foreign_key "journal_entries", "emotion_label_analyses", on_delete: :nullify
+  add_foreign_key "journal_entries", "journal_label_analyses", on_delete: :nullify
   add_foreign_key "journal_entries", "users"
+  add_foreign_key "journal_entry_insights", "journal_entries"
   add_foreign_key "journal_entry_tags", "journal_entries"
   add_foreign_key "journal_entry_tags", "tags"
+  add_foreign_key "journal_label_analyses", "journal_entries"
   add_foreign_key "mood_logs", "users"
   add_foreign_key "users", "accounts"
 end

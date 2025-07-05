@@ -19,6 +19,34 @@ class HabitPolicy < ApplicationPolicy
     owner_or_admin?
   end
 
+  def log_completion?
+    owner_or_admin?
+  end
+
+  def toggle_active?
+    owner_or_admin?
+  end
+
+  def history?
+    owner_or_admin?
+  end
+
+  def streaks?
+    true
+  end
+
+  def stats?
+    true
+  end
+
+  def dashboard?
+    true
+  end
+
+  def bulk_log?
+    true
+  end
+
   class Scope < Scope
     def resolve
       scope.where(user: user)

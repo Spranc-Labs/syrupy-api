@@ -12,23 +12,33 @@ Rails.application.routes.draw do
         post :login
         delete :logout
         get :me
+        post :refresh
       end
     end
 
     # Protected API routes (auth required)
     resources :journal_entries do
       member do
-        post :analyze_ai
+        post :analyze
       end
       collection do
         get :insights
         get :ai_service_status
+        get :emotion_stats
+        get :category_stats
       end
     end
     
     resources :goals do
+      member do
+        patch :mark_completed
+        patch :mark_in_progress
+      end
       collection do
         get :due_soon
+        get :stats
+        get :dashboard
+        patch :bulk_update
       end
     end
     
@@ -41,13 +51,26 @@ Rails.application.routes.draw do
     resources :habits do
       member do
         post :log_completion
+        patch :toggle_active
+        get :history
       end
       collection do
         get :streaks
+        get :stats
+        get :dashboard
+        post :bulk_log
       end
     end
     
     resources :habit_logs, only: [:index, :show, :create, :update, :destroy]
+    
+    resources :emotion_logs do
+      collection do
+        get :stats
+        get :trends
+        post :quick_log
+      end
+    end
     
     resources :tags
     

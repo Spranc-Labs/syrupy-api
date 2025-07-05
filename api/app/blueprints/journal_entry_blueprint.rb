@@ -4,24 +4,19 @@ class JournalEntryBlueprint < ApplicationBlueprint
   fields(
     :title,
     :content,
-    :mood_rating,
     :created_at,
     :updated_at,
     :discarded_at,
     :formatted_date,
     :word_count,
-    :ai_mood_score,
-    :ai_mood_label,
-    :ai_category,
-    :ai_emotions,
-    :ai_processing_time_ms,
-    :ai_analyzed_at,
-    :ai_analyzed?,
-    :ai_mood_emoji,
-    :ai_category_display,
-    :dominant_emotion,
-    :dominant_emotion_emoji
+    :analyzed?,
+    :current_category,
+    :category_display,
+    :primary_emotion,
+    :primary_emotion_emoji
   )
+
+
 
   association(
     :user,
@@ -33,5 +28,17 @@ class JournalEntryBlueprint < ApplicationBlueprint
     :tags,
     blueprint: TagBlueprint,
     if: ->(*, options) { self.include_association?(options, :tags) },
+  )
+
+  association(
+    :emotion_label_analysis,
+    blueprint: EmotionLabelAnalysisBlueprint,
+    if: ->(*, options) { self.include_association?(options, :emotion_label_analysis) },
+  )
+
+  association(
+    :journal_label_analysis,
+    blueprint: JournalLabelAnalysisBlueprint,
+    if: ->(*, options) { self.include_association?(options, :journal_label_analysis) },
   )
 end 

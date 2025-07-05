@@ -1,4 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { apiClient } from '../../../utils/apiClient';
+import { tokenStorage } from '../../../utils/tokenStorage';
 
 interface User {
   id: number;
@@ -26,10 +28,8 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(false); // Changed initial state
-  const [isInitialLoad, setIsInitialLoad] = useState(true); // New state
-
-  const API_BASE_URL = 'http://localhost:3000/api';
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
     fetchCurrentUser();
@@ -38,25 +38,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const fetchCurrentUser = async () => {
     setIsInitialLoad(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/me`, {
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
+      // Only try to fetch current user if we have tokens
+      if (tokenStorage.hasValidTokens()) {
+        const data = await apiClient.get('/auth/me');
         if (data.success && data.user) {
           setUser(data.user);
+          console.log('User authenticated from stored tokens:', data.user.email);
+        } else {
+          setUser(null);
+          tokenStorage.clearTokens();
         }
       } else {
-        // It's okay if this fails, just means user is not logged in
         setUser(null);
+        console.log('No valid tokens found, user needs to login');
       }
     } catch (error) {
       console.error('Error fetching current user:', error);
       setUser(null);
+      tokenStorage.clearTokens();
     } finally {
       setIsInitialLoad(false);
     }
@@ -65,19 +64,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<void> => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/login`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email, password }),
-      });
+      const data = await apiClient.post('/auth/login', { email, password });
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.message || 'Login failed');
+      }
+
+      // Store tokens
+      if (data.access_token && data.refresh_token) {
+        tokenStorage.setTokens(data.access_token, data.refresh_token);
+        console.log('Login successful, tokens stored for user:', data.user?.email);
+      } else {
+        console.warn('Login response missing tokens:', data);
       }
 
       setUser(data.user);
@@ -89,24 +87,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const register = async (email: string, password: string, firstName?: string, lastName?: string): Promise<void> => {
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/register`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ 
-          email, 
-          password,
-          first_name: firstName,
-          last_name: lastName
-        }),
+      const data = await apiClient.post('/auth/register', {
+        email,
+        password,
+        first_name: firstName,
+        last_name: lastName
       });
 
-      const data = await response.json();
-
-      if (!response.ok || !data.success) {
+      if (!data.success) {
         throw new Error(data.message || 'Registration failed');
+      }
+
+      // Store tokens
+      if (data.access_token && data.refresh_token) {
+        tokenStorage.setTokens(data.access_token, data.refresh_token);
       }
 
       setUser(data.user);
@@ -117,16 +111,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await fetch(`${API_BASE_URL}/auth/logout`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      await apiClient.delete('/auth/logout');
     } catch (error) {
       console.error('Error logging out:', error);
     } finally {
+      tokenStorage.clearTokens();
       setUser(null);
     }
   };

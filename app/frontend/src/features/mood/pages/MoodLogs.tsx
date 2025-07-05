@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../auth/providers/AuthProvider';
+import { apiClient } from '../../../utils/apiClient';
 
 interface MoodLog {
   id: number;
@@ -21,29 +22,15 @@ export const MoodLogs: React.FC = () => {
   });
   const [error, setError] = useState('');
 
-  const API_BASE_URL = 'http://localhost:3000/api';
-
   useEffect(() => {
     fetchMoodLogs();
   }, []);
 
-  const getAuthHeaders = () => ({
-    'Content-Type': 'application/json',
-  });
-
   const fetchMoodLogs = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/mood_logs`, {
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        // Handle paginated response format
-        setMoodLogs(data.data || data);
-      } else {
-        setError('Failed to fetch mood logs');
-      }
+      const data = await apiClient.get('/mood_logs');
+      // Handle paginated response format or direct array
+      setMoodLogs(data.data?.items || data.data || data);
     } catch (error) {
       setError('Error fetching mood logs');
     } finally {
@@ -56,31 +43,22 @@ export const MoodLogs: React.FC = () => {
     setError('');
 
     try {
-      const url = editingMood 
-        ? `${API_BASE_URL}/mood_logs/${editingMood.id}`
-        : `${API_BASE_URL}/mood_logs`;
+      const payload = { mood_log: formData };
       
-      const method = editingMood ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        credentials: 'include',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({ mood_log: formData }),
-      });
-
-      if (response.ok) {
-        await fetchMoodLogs();
-        setIsFormOpen(false);
-        setEditingMood(null);
-        setFormData({
-          rating: 5,
-          notes: '',
-          logged_at: new Date().toISOString().split('T')[0]
-        });
+      if (editingMood) {
+        await apiClient.put(`/mood_logs/${editingMood.id}`, payload);
       } else {
-        setError('Failed to save mood log');
+        await apiClient.post('/mood_logs', payload);
       }
+
+      await fetchMoodLogs();
+      setIsFormOpen(false);
+      setEditingMood(null);
+      setFormData({
+        rating: 5,
+        notes: '',
+        logged_at: new Date().toISOString().split('T')[0]
+      });
     } catch (error) {
       setError('Error saving mood log');
     }
@@ -100,17 +78,8 @@ export const MoodLogs: React.FC = () => {
     if (!confirm('Are you sure you want to delete this mood log?')) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/mood_logs/${id}`, {
-        method: 'DELETE',
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-
-      if (response.ok) {
-        await fetchMoodLogs();
-      } else {
-        setError('Failed to delete mood log');
-      }
+      await apiClient.delete(`/mood_logs/${id}`);
+      await fetchMoodLogs();
     } catch (error) {
       setError('Error deleting mood log');
     }

@@ -30,7 +30,7 @@ class ApiController < ApplicationController
     sorted.paginate(page: params[:page], per_page: params[:per_page])
   end
 
-  # before_action :authenticate_user!
+  before_action :authenticate_user!
   before_action :set_current_user
 
   private
@@ -38,21 +38,23 @@ class ApiController < ApplicationController
   def current_user
     return Current.user if Current.user
     
-    # Try session-based authentication first
-    if session[:account_id]
-      account = Account.find_by(id: session[:account_id])
-      return Current.user = account&.user if account&.user
+    # JWT token authentication only
+    if jwt_token.present?
+      payload = JwtService.decode(jwt_token)
+      if payload && payload[:account_id] && payload[:type] != 'refresh'
+        account = Account.find_by(id: payload[:account_id])
+        return Current.user = account&.user if account&.user
+      end
     end
     
-    # For testing/development, use the first user if no session
-    Current.user = User.first
+    nil
   end
 
   def authenticate_user!
     unless current_user
       render json: {
         success: false,
-        message: "Authentication required"
+        message: "Authentication required. Please log in."
       }, status: :unauthorized
     end
   end
@@ -62,6 +64,16 @@ class ApiController < ApplicationController
   end
 
   def pundit_user
-    Current.user = User.first
+    current_user
+  end
+
+  def jwt_token
+    # Extract token from Authorization header
+    auth_header = request.headers['Authorization']
+    return nil unless auth_header.present?
+    
+    # Expected format: "Bearer <token>"
+    token = auth_header.split(' ').last
+    token if token != 'Bearer'
   end
 end 

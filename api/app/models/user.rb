@@ -7,6 +7,7 @@ class User < ApplicationRecord
   has_many :mood_logs, dependent: :destroy
   has_many :habits, dependent: :destroy
   has_many :habit_logs, dependent: :destroy
+  has_many :emotion_logs, dependent: :destroy
 
   validates :first_name, presence: true
   validates :last_name, presence: true

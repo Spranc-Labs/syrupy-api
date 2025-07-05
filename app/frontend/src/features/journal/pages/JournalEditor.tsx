@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../../auth/providers/AuthProvider';
+import { apiClient } from '../../../utils/apiClient';
 
 interface JournalEntry {
   id: number;
@@ -10,17 +11,11 @@ interface JournalEntry {
   created_at: string;
   updated_at: string;
   // Journal labeling fields
-  ai_analyzed?: boolean;
-  ai_analyzed_at?: string;
-  ai_category?: string;
-  ai_category_display?: string;
-  ai_emotions?: Record<string, number>;
-  ai_mood_emoji?: string;
-  ai_mood_label?: string;
-  ai_mood_score?: string;
-  ai_processing_time_ms?: string;
-  dominant_emotion?: string;
-  dominant_emotion_emoji?: string;
+  current_category?: string;
+  category_display?: string;
+  primary_emotion?: string;
+  primary_emotion_emoji?: string;
+  analyzed?: boolean;
 }
 
 interface Tag {
@@ -44,8 +39,7 @@ export const JournalEditor: React.FC = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState('');
   const [showTagInput, setShowTagInput] = useState(false);
-
-  const API_BASE_URL = 'http://localhost:3000/api';
+  const [journalEntry, setJournalEntry] = useState<JournalEntry | null>(null);
 
   useEffect(() => {
     fetchTags();
@@ -54,20 +48,10 @@ export const JournalEditor: React.FC = () => {
     }
   }, [id]);
 
-  const getAuthHeaders = () => ({
-    'Content-Type': 'application/json',
-  });
-
   const fetchTags = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tags`, {
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setAvailableTags(data.data || data);
-      }
+      const data = await apiClient.get('/tags');
+      setAvailableTags(data.data || data);
     } catch (error) {
       console.error('Error fetching tags:', error);
     }
@@ -78,19 +62,14 @@ export const JournalEditor: React.FC = () => {
     
     setIsLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/journal_entries/${id}`, {
-        credentials: 'include',
-        headers: getAuthHeaders(),
-      });
-      if (response.ok) {
-        const entry = await response.json();
-        console.log(entry, "++++ENTRU");
-        setTitle(entry.title);
-        setContent(entry.content);
-        setSelectedTags(entry.tags || []);
-      } else {
-        setError('Failed to fetch entry');
-      }
+      const response = await apiClient.get(`/journal_entries/${id}`);
+      console.log(response, "++++ENTRY");
+      // The response should contain the entry data directly for individual entries
+      const entry = response.data || response;
+      setTitle(entry.title);
+      setContent(entry.content);
+      setSelectedTags(entry.tags || []);
+      setJournalEntry(entry);
     } catch (error) {
       setError('Error fetching entry');
     } finally {
@@ -108,38 +87,22 @@ export const JournalEditor: React.FC = () => {
     setError('');
 
     try {
-      const url = isEditing 
-        ? `${API_BASE_URL}/journal_entries/${id}`
-        : `${API_BASE_URL}/journal_entries`;
-      
-      const method = isEditing ? 'PUT' : 'POST';
-      
       const payload = {
         title: title.trim(),
         content: content.trim(),
         tag_ids: selectedTags.map(tag => tag.id)
       };
 
-      const response = await fetch(url, {
-        method,
-        credentials: 'include',
-        headers: getAuthHeaders(),
-        body: JSON.stringify(payload),
-      });
-
-      if (response.ok) {
-        navigate('/journal');
+      if (isEditing) {
+        await apiClient.put(`/journal_entries/${id}`, payload);
       } else {
-        const errorText = await response.text();
-        try {
-          const errorData = JSON.parse(errorText);
-          setError(errorData.message || JSON.stringify(errorData.errors) || 'Failed to save entry');
-        } catch {
-          setError(`Failed to save entry (${response.status}): ${errorText}`);
-        }
+        await apiClient.post('/journal_entries', payload);
       }
-    } catch (error) {
-      setError('Error saving entry: ' + (error instanceof Error ? error.message : String(error)));
+
+      navigate('/journal');
+    } catch (error: any) {
+      const errorMessage = error.message || 'Failed to save entry';
+      setError('Error saving entry: ' + errorMessage);
     } finally {
       setIsSaving(false);
     }
@@ -149,24 +112,16 @@ export const JournalEditor: React.FC = () => {
     if (!newTagName.trim()) return;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/tags`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: getAuthHeaders(),
-        body: JSON.stringify({
-          name: newTagName.trim(),
-          color: '#6366f1' // Default indigo color
-        }),
+      const data = await apiClient.post('/tags', {
+        name: newTagName.trim(),
+        color: '#6366f1' // Default indigo color
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        const newTag = data.data;
-        setAvailableTags([...availableTags, newTag]);
-        setSelectedTags([...selectedTags, newTag]);
-        setNewTagName('');
-        setShowTagInput(false);
-      }
+      const newTag = data.data || data;
+      setAvailableTags([...availableTags, newTag]);
+      setSelectedTags([...selectedTags, newTag]);
+      setNewTagName('');
+      setShowTagInput(false);
     } catch (error) {
       console.error('Error creating tag:', error);
     }
@@ -328,46 +283,52 @@ export const JournalEditor: React.FC = () => {
           {/* Selected Tags */}
           {selectedTags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-4">
-              {selectedTags.map((tag) => (
+              {selectedTags.map(tag => (
                 <span
                   key={tag.id}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200"
+                  style={{ backgroundColor: tag.color || '#6366f1' }} // Fallback to indigo
+                  className="flex items-center text-white text-sm px-3 py-1 rounded-full cursor-pointer"
+                  onClick={() => toggleTag(tag)}
                 >
                   {tag.name}
-                  <button
-                    onClick={() => toggleTag(tag)}
-                    className="ml-2 text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-200"
-                  >
-                    ×
-                  </button>
+                  <svg className="ml-1 w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12"></path></svg>
                 </span>
               ))}
-            </div>
-          )}
-
-          {/* New Tag Input */}
-          {showTagInput && (
-            <div className="flex items-center space-x-2 mb-4">
-              <input
-                type="text"
-                placeholder="Tag name"
-                value={newTagName}
-                onChange={(e) => setNewTagName(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 dark:bg-gray-700 dark:text-white"
-                onKeyPress={(e) => e.key === 'Enter' && createTag()}
-              />
-              <button
-                onClick={createTag}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md text-sm"
-              >
-                Create
-              </button>
-              <button
-                onClick={() => setShowTagInput(false)}
-                className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
-              >
-                Cancel
-              </button>
+              {showTagInput ? (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={newTagName}
+                    onChange={(e) => setNewTagName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        createTag();
+                      }
+                    }}
+                    placeholder="New tag name"
+                    className="px-3 py-1 border border-gray-300 dark:border-gray-700 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                  />
+                  <button
+                    onClick={createTag}
+                    className="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded-md text-sm"
+                  >
+                    Add
+                  </button>
+                  <button
+                    onClick={() => setShowTagInput(false)}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 text-sm"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowTagInput(true)}
+                  className="text-indigo-600 dark:text-indigo-400 hover:underline text-sm"
+                >
+                  + Add Tag
+                </button>
+              )}
             </div>
           )}
 
@@ -391,6 +352,24 @@ export const JournalEditor: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* Mood & Category Display */}
+        {isEditing && (journalEntry?.primary_emotion || journalEntry?.category_display) && (
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg shadow-sm flex items-center space-x-4">
+            {journalEntry.primary_emotion && (
+              <div className="flex items-center text-gray-700 dark:text-gray-300">
+                <span className="text-2xl mr-2">{journalEntry.primary_emotion_emoji}</span>
+                <span className="font-medium">{journalEntry.primary_emotion}</span>
+              </div>
+            )}
+            {journalEntry.category_display && (
+              <div className="flex items-center text-gray-700 dark:text-gray-300">
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5.98a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V5a2 2 0 012-2zm0 14h5.98a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                <span className="font-medium">{journalEntry.category_display}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
