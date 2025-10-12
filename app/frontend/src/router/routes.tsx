@@ -10,6 +10,7 @@ import { JournalEditor } from 'src/features/journal/pages/JournalEditor'
 import { Goals } from 'src/features/goals/pages/Goals'
 import { Habits } from 'src/features/habits/pages/Habits'
 import { MoodLogs } from 'src/features/mood/pages/MoodLogs'
+import { Resources } from 'src/features/resources/pages/Resources'
 
 export function AppRoutes() {
   return (
@@ -29,6 +30,7 @@ export function AppRoutes() {
           <Route path="goals" element={<Goals />} />
           <Route path="habits" element={<Habits />} />
           <Route path="mood" element={<MoodLogs />} />
+          <Route path="resources" element={<Resources />} />
         </Route>
       </Routes>
     </AuthProvider>

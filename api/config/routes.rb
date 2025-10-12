@@ -72,6 +72,8 @@ Rails.application.routes.draw do
       end
     end
     
+    resources :resources
+    
     resources :tags
     
     get "me" => "me#show"

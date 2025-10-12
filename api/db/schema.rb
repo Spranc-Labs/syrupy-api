@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_06_30_162910) do
+ActiveRecord::Schema[7.1].define(version: 2025_06_30_162912) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "plpgsql"
@@ -334,6 +334,45 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_30_162910) do
     t.index ["user_id"], name: "index_mood_logs_on_user_id"
   end
 
+  create_table "resource_contents", force: :cascade do |t|
+    t.bigint "resource_id", null: false
+    t.text "content"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "discarded_at"
+    t.index ["discarded_at"], name: "index_resource_contents_on_discarded_at"
+    t.index ["resource_id"], name: "index_resource_contents_on_resource_id", unique: true
+  end
+
+  create_table "resource_tags", force: :cascade do |t|
+    t.bigint "resource_id", null: false
+    t.bigint "tag_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "discarded_at"
+    t.index ["discarded_at"], name: "index_resource_tags_on_discarded_at"
+    t.index ["resource_id", "tag_id"], name: "index_resource_tags_on_resource_id_and_tag_id", unique: true
+    t.index ["resource_id"], name: "index_resource_tags_on_resource_id"
+    t.index ["tag_id"], name: "index_resource_tags_on_tag_id"
+  end
+
+  create_table "resources", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "url", null: false
+    t.string "title"
+    t.integer "status", default: 0
+    t.datetime "scraped_at"
+    t.jsonb "metadata", default: {}
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "discarded_at"
+    t.index ["discarded_at"], name: "index_resources_on_discarded_at"
+    t.index ["metadata"], name: "index_resources_on_metadata", using: :gin
+    t.index ["status"], name: "index_resources_on_status"
+    t.index ["url"], name: "index_resources_on_url"
+    t.index ["user_id"], name: "index_resources_on_user_id"
+  end
+
   create_table "tags", force: :cascade do |t|
     t.string "name", null: false
     t.string "color", default: "#6366f1"
@@ -381,5 +420,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_30_162910) do
   add_foreign_key "journal_entry_tags", "tags"
   add_foreign_key "journal_label_analyses", "journal_entries"
   add_foreign_key "mood_logs", "users"
+  add_foreign_key "resource_contents", "resources"
+  add_foreign_key "resource_tags", "resources"
+  add_foreign_key "resource_tags", "tags"
+  add_foreign_key "resources", "users"
   add_foreign_key "users", "accounts"
 end

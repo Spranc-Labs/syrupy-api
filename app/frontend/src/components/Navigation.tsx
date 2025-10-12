@@ -14,6 +14,7 @@ export const Navigation: React.FC = () => {
     { name: 'Goals', path: '/goals' },
     { name: 'Habits', path: '/habits' },
     { name: 'Mood', path: '/mood' },
+    { name: 'Resources', path: '/resources' },
   ];
 
   const isActive = (path: string) => location.pathname === path;

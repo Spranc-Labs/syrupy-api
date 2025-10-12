@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../auth/providers/AuthProvider';
+import { apiClient } from 'src/utils/apiClient';
 
 interface DashboardStats {
   journalEntries: number;
   goals: number;
   habits: number;
   moodLogs: number;
+  resources: number;
 }
 
 export const Dashboard: React.FC = () => {
@@ -16,10 +18,9 @@ export const Dashboard: React.FC = () => {
     goals: 0,
     habits: 0,
     moodLogs: 0,
+    resources: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
-
-  const API_BASE_URL = 'http://localhost:3000/api';
 
   useEffect(() => {
     fetchStats();
@@ -27,25 +28,37 @@ export const Dashboard: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      const [journalRes, goalsRes, habitsRes, moodRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/journal_entries`, { credentials: 'include' }),
-        fetch(`${API_BASE_URL}/goals`, { credentials: 'include' }),
-        fetch(`${API_BASE_URL}/habits`, { credentials: 'include' }),
-        fetch(`${API_BASE_URL}/mood_logs`, { credentials: 'include' }),
+      const [journalData, goalsData, habitsData, moodData, resourcesData] = await Promise.all([
+        apiClient.get('/journal_entries'),
+        apiClient.get('/goals'),
+        apiClient.get('/habits'),
+        apiClient.get('/mood_logs'),
+        apiClient.get('/resources'),
       ]);
 
-      const [journalData, goalsData, habitsData, moodData] = await Promise.all([
-        journalRes.ok ? journalRes.json() : { data: { items: [] } },
-        goalsRes.ok ? goalsRes.json() : { data: [] },
-        habitsRes.ok ? habitsRes.json() : { data: [] },
-        moodRes.ok ? moodRes.json() : { data: [] },
-      ]);
+      // Helper function to get count from different response formats
+      const getCount = (response: any) => {
+        // If response has data.items (paginated), return the total count
+        if (response.data?.items && response.data?.total !== undefined) {
+          return response.data.total;
+        }
+        // If response.data is an array, return its length
+        if (Array.isArray(response.data)) {
+          return response.data.length;
+        }
+        // If response is directly an array (direct Blueprint render), return its length
+        if (Array.isArray(response)) {
+          return response.length;
+        }
+        return 0;
+      };
 
       setStats({
-        journalEntries: journalData.data?.items?.length || journalData.data?.length || 0,
-        goals: goalsData.data?.length || goalsData.length || 0,
-        habits: habitsData.data?.length || habitsData.length || 0,
-        moodLogs: moodData.data?.length || moodData.length || 0,
+        journalEntries: getCount(journalData),
+        goals: getCount(goalsData),
+        habits: getCount(habitsData),
+        moodLogs: getCount(moodData),
+        resources: getCount(resourcesData),
       });
     } catch (error) {
       console.error('Error fetching stats:', error);
@@ -77,7 +90,7 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mb-8">
         <Link
           to="/journal"
           className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
@@ -145,12 +158,29 @@ export const Dashboard: React.FC = () => {
             </div>
           </div>
         </Link>
+
+        <Link
+          to="/resources"
+          className="bg-white dark:bg-gray-800 p-6 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Resources</p>
+              <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{stats.resources}</p>
+            </div>
+            <div className="text-blue-600 dark:text-blue-400">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+            </div>
+          </div>
+        </Link>
       </div>
 
       {/* Quick Actions */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm p-6">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
           <Link
             to="/journal/new"
             className="flex items-center justify-center p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
@@ -174,6 +204,12 @@ export const Dashboard: React.FC = () => {
             className="flex items-center justify-center p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
           >
             <span className="text-gray-700 dark:text-gray-300 font-medium">Log Mood</span>
+          </Link>
+          <Link
+            to="/resources"
+            className="flex items-center justify-center p-4 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+          >
+            <span className="text-gray-700 dark:text-gray-300 font-medium">Add Resource</span>
           </Link>
         </div>
       </div>
