@@ -75,7 +75,14 @@ Rails.application.routes.draw do
     resources :resources
     
     resources :tags
-    
+
+    # Browsing insights from Sync-BE
+    resources :browsing_insights, only: [:index] do
+      collection do
+        get :summary
+      end
+    end
+
     get "me" => "me#show"
     put "me" => "me#update"
   end

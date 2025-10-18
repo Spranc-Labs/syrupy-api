@@ -1,11 +1,9 @@
 class AddDiscardedAtToAnalysisTables < ActiveRecord::Migration[7.1]
   def change
-    add_column :emotion_logs, :discarded_at, :datetime
-    add_column :emotion_label_analyses, :discarded_at, :datetime
-    add_column :journal_label_analyses, :discarded_at, :datetime
-    
-    add_index :emotion_logs, :discarded_at
-    add_index :emotion_label_analyses, :discarded_at
-    add_index :journal_label_analyses, :discarded_at
+    # All tables already have discarded_at columns and indexes from their create migrations:
+    # - emotion_logs: CreateEmotionLogs (20250630162906)
+    # - emotion_label_analyses: CreateEmotionLabelAnalyses (20250630162904)
+    # - journal_label_analyses: CreateJournalLabelAnalyses (20250630162905)
+    # This migration is a no-op to maintain migration history
   end
 end 

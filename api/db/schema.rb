@@ -98,9 +98,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_30_162912) do
     t.string "top_emotion"
     t.integer "run_ms"
     t.datetime "analyzed_at", null: false
+    t.datetime "discarded_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.datetime "discarded_at"
     t.index ["analyzed_at"], name: "index_emotion_label_analyses_on_analyzed_at"
     t.index ["discarded_at"], name: "index_emotion_label_analyses_on_discarded_at"
     t.index ["journal_entry_id"], name: "index_emotion_label_analyses_on_journal_entry_id"
@@ -113,9 +113,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_30_162912) do
     t.string "emoji"
     t.text "note"
     t.datetime "captured_at", null: false
+    t.datetime "discarded_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.datetime "discarded_at"
     t.index ["captured_at"], name: "index_emotion_logs_on_captured_at"
     t.index ["discarded_at"], name: "index_emotion_logs_on_discarded_at"
     t.index ["emotion_label"], name: "index_emotion_logs_on_emotion_label"
@@ -276,24 +276,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_30_162912) do
     t.index ["user_id"], name: "index_journal_entries_on_user_id"
   end
 
-  create_table "journal_entry_insights", force: :cascade do |t|
-    t.bigint "journal_entry_id", null: false
-    t.boolean "ai_analyzed", default: false, null: false
-    t.datetime "ai_analyzed_at", precision: nil
-    t.float "ai_processing_time_ms"
-    t.string "ai_mood_label"
-    t.float "ai_mood_score"
-    t.string "ai_mood_emoji"
-    t.jsonb "ai_emotions", default: {}, null: false
-    t.string "dominant_emotion"
-    t.string "dominant_emotion_emoji"
-    t.string "ai_category"
-    t.string "ai_category_display"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["journal_entry_id"], name: "index_journal_entry_insights_on_journal_entry_id", unique: true
-  end
-
   create_table "journal_entry_tags", force: :cascade do |t|
     t.bigint "journal_entry_id", null: false
     t.bigint "tag_id", null: false
@@ -311,9 +293,9 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_30_162912) do
     t.jsonb "payload", default: {}, null: false
     t.integer "run_ms"
     t.datetime "analyzed_at", null: false
+    t.datetime "discarded_at"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.datetime "discarded_at"
     t.index ["analyzed_at"], name: "index_journal_label_analyses_on_analyzed_at"
     t.index ["discarded_at"], name: "index_journal_label_analyses_on_discarded_at"
     t.index ["journal_entry_id"], name: "index_journal_label_analyses_on_journal_entry_id"
@@ -415,7 +397,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_30_162912) do
   add_foreign_key "journal_entries", "emotion_label_analyses", on_delete: :nullify
   add_foreign_key "journal_entries", "journal_label_analyses", on_delete: :nullify
   add_foreign_key "journal_entries", "users"
-  add_foreign_key "journal_entry_insights", "journal_entries"
   add_foreign_key "journal_entry_tags", "journal_entries"
   add_foreign_key "journal_entry_tags", "tags"
   add_foreign_key "journal_label_analyses", "journal_entries"

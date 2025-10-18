@@ -24,20 +24,32 @@ end
 
 puts "Created #{Tag.count} tags"
 
-# Create a demo user (only in development) 
-# TODO: Re-enable demo account creation when authentication is fixed
+# Create a demo user (only in development)
 if Rails.env.development?
   puts "Creating demo user..."
-  
-  # For now, create a user without an account since Account model has issues
-  demo_user = User.find_by(email: "demo@syrupy.com") 
-  if demo_user.nil?
+
+  # Check if demo user already exists
+  demo_account = Account.find_by(email: "demo@syrupy.com")
+  if demo_account.nil?
+    # Create account with authentication
+    demo_account = Account.create!(
+      email: "demo@syrupy.com",
+      password: "password123",
+      password_confirmation: "password123",
+      status: 2 # verified
+    )
+
+    # Create user profile
     demo_user = User.create!(
+      account_id: demo_account.id,
       first_name: "Demo",
       last_name: "User",
       email: "demo@syrupy.com"
-      # account: nil # TODO: Fix this when authentication is working
     )
+    puts "✓ Created demo user: demo@syrupy.com / password123"
+  else
+    demo_user = demo_account.user
+    puts "✓ Demo user already exists: demo@syrupy.com"
   end
 
   # Create sample journal entries with emotion analysis
@@ -53,16 +65,16 @@ if Rails.env.development?
     
     # Create emotion analysis for entry1
     emotion_analysis1 = entry1.emotion_label_analyses.create!(
-      model_name: 'emotion_classifier',
+      analysis_model: 'emotion_classifier',
       model_version: '1.0',
       payload: { 'happiness' => 0.8, 'excitement' => 0.7, 'optimism' => 0.6 },
       top_emotion: 'happiness',
       run_ms: 150,
       analyzed_at: Time.current
     )
-    
+
     journal_analysis1 = entry1.journal_label_analyses.create!(
-      model_name: 'category_classifier', 
+      analysis_model: 'category_classifier',
       model_version: '1.0',
       payload: { 'category' => 'personal_growth' },
       run_ms: 120,
@@ -83,16 +95,16 @@ if Rails.env.development?
     entry2.tags << [reflection_tag]
     
     emotion_analysis2 = entry2.emotion_label_analyses.create!(
-      model_name: 'emotion_classifier',
-      model_version: '1.0', 
+      analysis_model: 'emotion_classifier',
+      model_version: '1.0',
       payload: { 'stress' => 0.7, 'determination' => 0.5, 'acceptance' => 0.4 },
       top_emotion: 'stress',
       run_ms: 180,
       analyzed_at: 1.day.ago
     )
-    
+
     journal_analysis2 = entry2.journal_label_analyses.create!(
-      model_name: 'category_classifier',
+      analysis_model: 'category_classifier',
       model_version: '1.0',
       payload: { 'category' => 'work_stress' },
       run_ms: 140,
@@ -113,16 +125,16 @@ if Rails.env.development?
     entry3.tags << [gratitude_tag, daily_tag]
     
     emotion_analysis3 = entry3.emotion_label_analyses.create!(
-      model_name: 'emotion_classifier',
+      analysis_model: 'emotion_classifier',
       model_version: '1.0',
       payload: { 'gratitude' => 0.9, 'contentment' => 0.7, 'peace' => 0.6 },
       top_emotion: 'gratitude',
       run_ms: 160,
       analyzed_at: 2.days.ago
     )
-    
+
     journal_analysis3 = entry3.journal_label_analyses.create!(
-      model_name: 'category_classifier',
+      analysis_model: 'category_classifier',
       model_version: '1.0',
       payload: { 'category' => 'gratitude_practice' },
       run_ms: 130,
@@ -138,18 +150,18 @@ if Rails.env.development?
   # Create emotion logs
   if demo_user.emotion_logs.empty?
     puts "Creating sample emotion logs..."
-    
+
     emotions_data = [
-      { emotion: 'happy', emoji: '😊', note: 'Great start to the day!', time: Time.current },
-      { emotion: 'content', emoji: '😌', note: 'Feeling peaceful after meditation', time: 3.hours.ago },
-      { emotion: 'grateful', emoji: '🙏', note: 'Thankful for family time', time: 1.day.ago },
-      { emotion: 'anxious', emoji: '😰', note: 'Worried about upcoming presentation', time: 2.days.ago },
-      { emotion: 'excited', emoji: '🤩', note: 'Looking forward to weekend plans', time: 3.days.ago }
+      { emotion_label: :happy, emoji: '😊', note: 'Great start to the day!', time: Time.current },
+      { emotion_label: :content, emoji: '😌', note: 'Feeling peaceful after meditation', time: 3.hours.ago },
+      { emotion_label: :grateful, emoji: '🙏', note: 'Thankful for family time', time: 1.day.ago },
+      { emotion_label: :anxious, emoji: '😰', note: 'Worried about upcoming presentation', time: 2.days.ago },
+      { emotion_label: :excited, emoji: '🤩', note: 'Looking forward to weekend plans', time: 3.days.ago }
     ]
-    
+
     emotions_data.each do |emotion_data|
       demo_user.emotion_logs.create!(
-        emotion_label: emotion_data[:emotion],
+        emotion_label: emotion_data[:emotion_label],
         emoji: emotion_data[:emoji],
         note: emotion_data[:note],
         captured_at: emotion_data[:time]
