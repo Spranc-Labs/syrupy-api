@@ -109,9 +109,8 @@ gem "blueprinter"
 # For bulk inserting records
 gem "activerecord-import"
 
-# For HTTP requests
+# For HTTP requests with middleware support
 gem "faraday"
-gem "httparty"
 
 # For JWT token authentication
 gem "jwt"

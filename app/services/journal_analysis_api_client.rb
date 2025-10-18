@@ -5,6 +5,7 @@
 class JournalAnalysisApiClient
   BASE_URL = ENV.fetch('JOURNAL_ANALYSIS_API_URL', 'http://localhost:8001')
   REQUEST_TIMEOUT = 30
+  OPEN_TIMEOUT = 10
 
   class AnalysisError < StandardError; end
   class ConnectionError < AnalysisError; end
@@ -45,45 +46,59 @@ class JournalAnalysisApiClient
 
   private
 
-  def make_request(endpoint, payload)
-    url = "#{BASE_URL}#{endpoint}"
+  # Build Faraday connection with middleware stack
+  def connection
+    @connection ||= Faraday.new(url: BASE_URL) do |f|
+      # Request middleware
+      f.request :json                          # Encode request body as JSON
+      f.request :retry,                        # Retry failed requests with backoff
+                max: 3,
+                interval: 0.5,
+                backoff_factor: 2,
+                retry_statuses: [408, 429, 500, 502, 503, 504],
+                methods: [:post]
 
-    response = HTTParty.post(
-      url,
-      body: payload.to_json,
-      headers: {
-        'Content-Type' => 'application/json',
-        'Accept' => 'application/json'
-      },
-      timeout: REQUEST_TIMEOUT
-    )
+      # Response middleware
+      f.response :json,                        # Parse response body as JSON
+                 content_type: /\bjson$/,
+                 parser_options: { symbolize_names: false }
+      f.response :logger, Rails.logger,        # Log requests/responses
+                 { headers: true, bodies: false } do |logger|
+        logger.filter(/(title|content)/, '[FILTERED]')
+      end
+      f.response :raise_error                  # Raise errors for 4xx/5xx responses
 
-    handle_response(response, endpoint)
-  rescue Net::OpenTimeout, Net::ReadTimeout => e
-    Rails.logger.error("Journal Analysis API timeout: #{e.message}")
-    raise TimeoutError, "Analysis service request timeout after #{REQUEST_TIMEOUT}s"
-  rescue StandardError => e
-    Rails.logger.error("Journal Analysis API error: #{e.message}")
-    raise ConnectionError, "Failed to connect to analysis service: #{e.message}"
-  end
-
-  def handle_response(response, _endpoint)
-    case response.code
-    when 200
-      parse_response(response)
-    when 408, 504
-      raise TimeoutError, "Analysis service timeout (HTTP #{response.code})"
-    when 500, 502, 503
-      raise ConnectionError, "Analysis service unavailable (HTTP #{response.code})"
-    else
-      raise AnalysisError, "Analysis failed: HTTP #{response.code} - #{response.body}"
+      # HTTP adapter
+      f.adapter Faraday.default_adapter
     end
   end
 
-  def parse_response(response)
-    JSON.parse(response.body).with_indifferent_access
-  rescue JSON::ParserError => e
-    Rails.logger.error("Invalid JSON response from analysis service: #{e.message}")
-    raise AnalysisError, 'Invalid response format from analysis service'
+  def make_request(endpoint, payload)
+    response = connection.post(endpoint) do |req|
+      req.body = payload
+      req.options.timeout = REQUEST_TIMEOUT        # Request timeout
+      req.options.open_timeout = OPEN_TIMEOUT      # Connection timeout
+    end
+
+    # Response body already parsed by json middleware
+    response.body.with_indifferent_access
+  rescue Faraday::TimeoutError => e
+    Rails.logger.error("Journal Analysis API timeout: #{e.message}")
+    raise TimeoutError, "Analysis service request timeout after #{REQUEST_TIMEOUT}s"
+  rescue Faraday::ConnectionFailed => e
+    Rails.logger.error("Journal Analysis API connection failed: #{e.message}")
+    raise ConnectionError, "Failed to connect to analysis service: #{e.message}"
+  rescue Faraday::ServerError => e
+    Rails.logger.error("Journal Analysis API server error: #{e.response[:status]} - #{e.message}")
+    raise ConnectionError, "Analysis service unavailable (HTTP #{e.response[:status]})"
+  rescue Faraday::ClientError => e
+    # 4xx errors
+    status = e.response[:status]
+    body = e.response[:body]
+    Rails.logger.error("Journal Analysis API client error: #{status} - #{body}")
+    raise AnalysisError, "Analysis failed: HTTP #{status} - #{body}"
+  rescue Faraday::Error => e
+    Rails.logger.error("Journal Analysis API error: #{e.message}")
+    raise AnalysisError, "Analysis request failed: #{e.message}"
   end
 end

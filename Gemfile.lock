@@ -152,10 +152,6 @@ GEM
     groupdate (6.7.0)
       activesupport (>= 7.1)
     hashdiff (1.2.0)
-    httparty (0.23.1)
-      csv
-      mini_mime (>= 1.0.0)
-      multi_xml (>= 0.5.2)
     httplog (1.6.3)
       rack (>= 2.0)
       rainbow (>= 2.0.0)
@@ -200,8 +196,6 @@ GEM
     mini_mime (1.1.5)
     minitest (5.25.5)
     msgpack (1.8.0)
-    multi_xml (0.7.2)
-      bigdecimal (~> 3.1)
     mutex_m (0.3.0)
     n_plus_one_control (0.7.2)
     net-http (0.6.0)
@@ -430,7 +424,6 @@ DEPENDENCIES
   good_job (~> 3.28)
   google-protobuf (>= 4.28.2)
   groupdate
-  httparty
   httplog (~> 1.6.3)
   jwt
   letter_opener
