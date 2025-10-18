@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Api::HabitLogsController < ApiController
+class Api::V1::HabitLogsController < Api::V1::ApiController
   def index
     habit_logs = policy_scope(HabitLog).includes(:user, :habit)
                                       .order(logged_date: :desc)

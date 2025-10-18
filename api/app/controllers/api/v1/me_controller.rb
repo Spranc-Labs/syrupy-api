@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Api::MeController < ApiController
+class Api::V1::MeController < Api::V1::ApiController
   def show
     # TODO: Remove when authentication is fixed - for now return a dummy user
     user = Current.user || User.first || User.new(full_name: "Demo User", email: "demo@example.com")

@@ -5,86 +5,88 @@ Rails.application.routes.draw do
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   namespace :api do
-    # Authentication routes (no auth required)
-    resources :auth, only: [] do
-      collection do
-        post :register
-        post :login
-        delete :logout
-        get :me
-        post :refresh
+    namespace :v1 do
+      # Authentication routes (no auth required)
+      resources :auth, only: [] do
+        collection do
+          post :register
+          post :login
+          delete :logout
+          get :me
+          post :refresh
+        end
       end
-    end
 
-    # Protected API routes (auth required)
-    resources :journal_entries do
-      member do
-        post :analyze
+      # Protected API routes (auth required)
+      resources :journal_entries do
+        member do
+          post :analyze
+        end
+        collection do
+          get :insights
+          get :ai_service_status
+          get :emotion_stats
+          get :category_stats
+        end
       end
-      collection do
-        get :insights
-        get :ai_service_status
-        get :emotion_stats
-        get :category_stats
-      end
-    end
-    
-    resources :goals do
-      member do
-        patch :mark_completed
-        patch :mark_in_progress
-      end
-      collection do
-        get :due_soon
-        get :stats
-        get :dashboard
-        patch :bulk_update
-      end
-    end
-    
-    resources :mood_logs do
-      collection do
-        get :trends
-      end
-    end
-    
-    resources :habits do
-      member do
-        post :log_completion
-        patch :toggle_active
-        get :history
-      end
-      collection do
-        get :streaks
-        get :stats
-        get :dashboard
-        post :bulk_log
-      end
-    end
-    
-    resources :habit_logs, only: [:index, :show, :create, :update, :destroy]
-    
-    resources :emotion_logs do
-      collection do
-        get :stats
-        get :trends
-        post :quick_log
-      end
-    end
-    
-    resources :resources
-    
-    resources :tags
 
-    # Browsing insights from Sync-BE
-    resources :browsing_insights, only: [:index] do
-      collection do
-        get :summary
+      resources :goals do
+        member do
+          patch :mark_completed
+          patch :mark_in_progress
+        end
+        collection do
+          get :due_soon
+          get :stats
+          get :dashboard
+          patch :bulk_update
+        end
       end
-    end
 
-    get "me" => "me#show"
-    put "me" => "me#update"
+      resources :mood_logs do
+        collection do
+          get :trends
+        end
+      end
+
+      resources :habits do
+        member do
+          post :log_completion
+          patch :toggle_active
+          get :history
+        end
+        collection do
+          get :streaks
+          get :stats
+          get :dashboard
+          post :bulk_log
+        end
+      end
+
+      resources :habit_logs, only: [:index, :show, :create, :update, :destroy]
+
+      resources :emotion_logs do
+        collection do
+          get :stats
+          get :trends
+          post :quick_log
+        end
+      end
+
+      resources :resources
+
+      resources :tags
+
+      # Browsing insights from Sync-BE
+      resources :browsing_insights, only: [:index] do
+        collection do
+          get :summary
+        end
+      end
+
+      get "me" => "me#show"
+      put "me" => "me#update"
+    end
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Api::MoodLogsController < ApiController
+class Api::V1::MoodLogsController < Api::V1::ApiController
   def index
     mood_logs = policy_scope(MoodLog).includes(:user)
                                     .order(logged_at: :desc)

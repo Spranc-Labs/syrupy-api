@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class Api::TagsController < ApiController
+class Api::V1::TagsController < Api::V1::ApiController
   def index
     tags = policy_scope(Tag).all
     
