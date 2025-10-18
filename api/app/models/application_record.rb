@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ApplicationRecord < ActiveRecord::Base
   # Use 'discarded_at' field to soft delete records
   include Discard::Model

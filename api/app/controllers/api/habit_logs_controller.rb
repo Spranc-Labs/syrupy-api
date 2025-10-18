@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Api::HabitLogsController < ApiController
   def index
     habit_logs = policy_scope(HabitLog).includes(:user, :habit)

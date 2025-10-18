@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Not using ApplicationRecord to avoid automatic inclusion of discard gem
 class Account < ActiveRecord::Base
   self.table_name = "accounts"

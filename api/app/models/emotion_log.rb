@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class EmotionLog < ApplicationRecord
   belongs_to :user
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RodauthMain < Rodauth::Rails::Auth
   configure do
     # See the Rodauth documentation for the list of available config options:

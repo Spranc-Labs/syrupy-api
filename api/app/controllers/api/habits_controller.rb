@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Api
   class HabitsController < ApiController
     before_action :set_habit, only: [:show, :update, :destroy, :log_completion, :toggle_active]

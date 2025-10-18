@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Api
   class EmotionLogsController < ApiController
     before_action :set_emotion_log, only: [:show, :update, :destroy]

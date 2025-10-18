@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This is the superclass of all controllers in the application, defining various
 # defaults and helper methods.
 class ApplicationController < ActionController::API

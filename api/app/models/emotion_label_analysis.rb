@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class EmotionLabelAnalysis < ApplicationRecord
   belongs_to :journal_entry
 

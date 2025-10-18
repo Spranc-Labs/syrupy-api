@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class RodauthMailer < ApplicationMailer
   # To have a good performance, you should avoid loading the whole
   # rodauth instance for each email, instead you should just load

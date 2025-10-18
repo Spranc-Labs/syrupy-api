@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # ApiController is for all API controllers that expect a user to be authenticated
 class ApiController < ApplicationController
   include ActionView::Helpers::NumberHelper

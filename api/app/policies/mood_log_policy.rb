@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class MoodLogPolicy < ApplicationPolicy
   def index?
     user.present?

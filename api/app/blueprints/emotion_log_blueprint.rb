@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class EmotionLogBlueprint < ApplicationBlueprint
   identifier :id
 
@@ -31,6 +33,7 @@ class EmotionLogBlueprint < ApplicationBlueprint
     end
   end
 
+  # Format: "July 06, 2025 at 2:30 PM"
   field :formatted_captured_at do |emotion_log|
     emotion_log.captured_at.strftime("%B %d, %Y at %l:%M %p")
   end

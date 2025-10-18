@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Api
   class GoalsController < ApiController
     before_action :set_goal, only: [:show, :update, :destroy, :mark_completed, :mark_in_progress]

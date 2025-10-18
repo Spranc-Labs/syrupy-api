@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Resource < ApplicationRecord
   belongs_to :user
   has_one :resource_content, dependent: :destroy

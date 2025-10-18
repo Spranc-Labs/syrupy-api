@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module Api
   class ResourcesController < ApiController
     before_action :set_resource, only: [:show, :update, :destroy]

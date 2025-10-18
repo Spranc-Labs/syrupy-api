@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Api::AuthController < ApiController
   skip_before_action :authenticate_user!, only: [:register, :login, :refresh]
   skip_after_action :verify_authorized

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Api::MeController < ApiController
   def show
     # TODO: Remove when authentication is fixed - for now return a dummy user

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Credentials
   class << self
     # Method to fetch configuration with support for ENV variables and credentials

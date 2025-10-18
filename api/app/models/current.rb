@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # See https://api.rubyonrails.org/classes/ActiveSupport/CurrentAttributes.html
 # We use this to set some request-specific attributes that we want to be available globally.
 # This automatically resets the attributes at the end of the request.

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class MoodLogBlueprint < ApplicationBlueprint
   identifier :id
 

@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class JournalLabelAnalysis < ApplicationRecord
   belongs_to :journal_entry
 

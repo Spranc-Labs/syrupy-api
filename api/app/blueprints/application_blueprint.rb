@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class ApplicationBlueprint < Blueprinter::Base
   class << self
     # Use this method to render an object with nested associations, eg;

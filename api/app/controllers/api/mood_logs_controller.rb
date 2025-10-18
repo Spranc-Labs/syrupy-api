@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Api::MoodLogsController < ApiController
   def index
     mood_logs = policy_scope(MoodLog).includes(:user)
