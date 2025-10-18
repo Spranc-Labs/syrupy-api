@@ -67,7 +67,7 @@ class JournalAnalysisApiClient
     raise ConnectionError, "Failed to connect to analysis service: #{e.message}"
   end
 
-  def handle_response(response, endpoint)
+  def handle_response(response, _endpoint)
     case response.code
     when 200
       parse_response(response)
@@ -84,6 +84,6 @@ class JournalAnalysisApiClient
     JSON.parse(response.body).with_indifferent_access
   rescue JSON::ParserError => e
     Rails.logger.error("Invalid JSON response from analysis service: #{e.message}")
-    raise AnalysisError, "Invalid response format from analysis service"
+    raise AnalysisError, 'Invalid response format from analysis service'
   end
 end

@@ -8,8 +8,8 @@ module Api
 
       def index
         @resources = policy_scope(Resource)
-          .includes(:tags, :resource_content)
-          .recent
+                     .includes(:tags, :resource_content)
+                     .recent
 
         # Filter by status if provided
         @resources = @resources.by_status(params[:status]) if params[:status].present?
@@ -17,13 +17,13 @@ module Api
         # Search by URL or title
         if params[:search].present?
           @resources = @resources.where(
-            "url ILIKE ? OR title ILIKE ?",
+            'url ILIKE ? OR title ILIKE ?',
             "%#{params[:search]}%", "%#{params[:search]}%"
           )
         end
 
         @resources = @resources
-          .paginate(page: params[:page], per_page: params[:per_page] || 20)
+                     .paginate(page: params[:page], per_page: params[:per_page] || 20)
 
         render json: ResourceBlueprint.render(@resources)
       end

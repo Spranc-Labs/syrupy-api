@@ -7,6 +7,7 @@ module Api
       include ActionView::Helpers::NumberHelper
 
       include Pundit::Authorization
+
       # For GET requests, we expect to see a policy_scope call used because that scopes down
       # the records that the user is allowed to see. For non-GET requests, we expect to see
       # an authorize call used because that checks that the user is allowed to perform the
@@ -24,8 +25,8 @@ module Api
           data: {
             items: rendered_items,
             pages: collection.total_pages,
-            total: collection.total_entries,
-          },
+            total: collection.total_entries
+          }
         }
       end
 
@@ -55,12 +56,12 @@ module Api
       end
 
       def authenticate_user!
-        unless current_user
-          render json: {
-            success: false,
-            message: "Authentication required. Please log in."
-          }, status: :unauthorized
-        end
+        return if current_user
+
+        render json: {
+          success: false,
+          message: 'Authentication required. Please log in.'
+        }, status: :unauthorized
       end
 
       def set_current_user
@@ -77,7 +78,7 @@ module Api
         return nil unless auth_header.present?
 
         # Expected format: "Bearer <token>"
-        token = auth_header.split(' ').last
+        token = auth_header.split.last
         token if token != 'Bearer'
       end
     end

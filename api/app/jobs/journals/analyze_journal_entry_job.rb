@@ -34,9 +34,9 @@ class AnalyzeJournalEntryJob < ApplicationJob
     )
 
     # Extract mood and category data
-    mood_data = analysis_response.dig('mood') || {}
-    category_data = analysis_response.dig('category') || {}
-    processing_time = analysis_response.dig('processing_time_ms') || 0
+    mood_data = analysis_response['mood'] || {}
+    category_data = analysis_response['category'] || {}
+    analysis_response['processing_time_ms'] || 0
 
     # Create emotion analysis record
     emotion_analysis = journal_entry.emotion_label_analyses.create!(
@@ -97,4 +97,4 @@ class AnalyzeJournalEntryJob < ApplicationJob
     }
     color_map[category.to_s.downcase] || '#6b7280'
   end
-end 
+end

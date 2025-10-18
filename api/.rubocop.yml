@@ -1,0 +1,75 @@
+AllCops:
+  NewCops: enable
+  Exclude:
+    - 'db/schema.rb'
+    - 'db/migrate/*'
+    - 'bin/*'
+    - 'vendor/**/*'
+    - 'node_modules/**/*'
+    - 'tmp/**/*'
+    - 'log/**/*'
+  TargetRubyVersion: 3.3
+
+# Layout
+Layout/LineLength:
+  Max: 120
+
+Layout/EmptyLinesAroundClassBody:
+  EnforcedStyle: no_empty_lines
+
+Layout/EmptyLinesAroundModuleBody:
+  EnforcedStyle: no_empty_lines
+
+# Style
+Style/Documentation:
+  Enabled: false
+
+Style/FrozenStringLiteralComment:
+  Enabled: true
+  EnforcedStyle: always
+
+Style/StringLiterals:
+  EnforcedStyle: single_quotes
+
+Style/SymbolArray:
+  EnforcedStyle: brackets
+
+# Metrics
+Metrics/MethodLength:
+  Max: 20
+  Exclude:
+    - 'db/migrate/*'
+    - 'app/controllers/**/*'
+    - 'app/jobs/**/*'
+
+Metrics/ClassLength:
+  Max: 150
+  Exclude:
+    - 'app/controllers/**/*'
+
+Metrics/CyclomaticComplexity:
+  Max: 10
+  Exclude:
+    - 'app/controllers/**/*'
+
+Metrics/PerceivedComplexity:
+  Max: 10
+  Exclude:
+    - 'app/controllers/**/*'
+
+Metrics/BlockLength:
+  Exclude:
+    - 'config/**/*'
+    - 'spec/**/*'
+    - 'db/**/*'
+
+Metrics/AbcSize:
+  Max: 20
+  Exclude:
+    - 'db/migrate/*'
+    - 'app/controllers/**/*'
+    - 'app/jobs/**/*'
+
+# Naming
+Naming/VariableNumber:
+  Enabled: false

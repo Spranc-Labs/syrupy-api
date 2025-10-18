@@ -9,7 +9,7 @@ module Api
 
       def index
         @habits = policy_scope(Habit)
-          .includes(:user, :habit_logs)
+                  .includes(:user, :habit_logs)
 
         # Filter by active status
         @habits = @habits.where(active: params[:active]) if params[:active].present?
@@ -17,7 +17,7 @@ module Api
         # Search by name or description
         if params[:q].present?
           @habits = @habits.where(
-            "name ILIKE ? OR description ILIKE ?",
+            'name ILIKE ? OR description ILIKE ?',
             "%#{params[:q]}%", "%#{params[:q]}%"
           )
         end
@@ -26,8 +26,8 @@ module Api
         @habits = @habits.where(frequency: params[:frequency]) if params[:frequency].present?
 
         @habits = @habits
-          .order(:name)
-          .paginate(page: params[:page], per_page: params[:per_page] || 20)
+                  .order(:name)
+                  .paginate(page: params[:page], per_page: params[:per_page] || 20)
 
         render json: HabitBlueprint.render(@habits)
       end
@@ -209,8 +209,8 @@ module Api
         start_date = days.days.ago.to_date
 
         logs = @habit.habit_logs
-          .where(logged_date: start_date..Date.current)
-          .order(:logged_date)
+                     .where(logged_date: start_date..Date.current)
+                     .order(:logged_date)
 
         # Create a complete date range with completion status
         history = (start_date..Date.current).map do |date|
@@ -249,9 +249,9 @@ module Api
 
       def habits_completed_today
         current_user.habit_logs
-          .joins(:habit)
-          .where(logged_date: Date.current, completed: true)
-          .count
+                    .joins(:habit)
+                    .where(logged_date: Date.current, completed: true)
+                    .count
       end
 
       def completion_rate_this_week
@@ -260,9 +260,9 @@ module Api
         return 0 if total_possible.zero?
 
         completed = current_user.habit_logs
-          .joins(:habit)
-          .where(logged_date: week_start..Date.current, completed: true)
-          .count
+                                .joins(:habit)
+                                .where(logged_date: week_start..Date.current, completed: true)
+                                .count
 
         ((completed.to_f / total_possible) * 100).round(2)
       end
@@ -283,24 +283,24 @@ module Api
       def todays_progress_for_user
         active_habits = current_user.habits.where(active: true)
         completed_today = current_user.habit_logs
-          .joins(:habit)
-          .where(logged_date: Date.current, completed: true)
-          .count
+                                      .joins(:habit)
+                                      .where(logged_date: Date.current, completed: true)
+                                      .count
 
         {
           total_active: active_habits.count,
           completed_today: completed_today,
-          completion_percentage: active_habits.count.zero? ? 0 : ((completed_today.to_f / active_habits.count) * 100).round(2)
+          completion_percentage: active_habits.none? ? 0 : ((completed_today.to_f / active_habits.count) * 100).round(2)
         }
       end
 
       def weekly_summary_for_user
         week_start = Date.current.beginning_of_week
         daily_completions = current_user.habit_logs
-          .joins(:habit)
-          .where(logged_date: week_start..Date.current, completed: true)
-          .group(:logged_date)
-          .count
+                                        .joins(:habit)
+                                        .where(logged_date: week_start..Date.current, completed: true)
+                                        .group(:logged_date)
+                                        .count
 
         (week_start..Date.current).map do |date|
           {
@@ -312,10 +312,10 @@ module Api
 
       def top_streaks_for_user
         current_user.habits
-          .where('current_streak > 0')
-          .order(current_streak: :desc)
-          .limit(5)
-          .pluck(:name, :current_streak)
+                    .where('current_streak > 0')
+                    .order(current_streak: :desc)
+                    .limit(5)
+                    .pluck(:name, :current_streak)
       end
 
       def completion_trends_for_user
@@ -323,10 +323,10 @@ module Api
         start_date = days.days.ago.to_date
 
         daily_completions = current_user.habit_logs
-          .joins(:habit)
-          .where(logged_date: start_date..Date.current, completed: true)
-          .group(:logged_date)
-          .count
+                                        .joins(:habit)
+                                        .where(logged_date: start_date..Date.current, completed: true)
+                                        .group(:logged_date)
+                                        .count
 
         (start_date..Date.current).map do |date|
           {

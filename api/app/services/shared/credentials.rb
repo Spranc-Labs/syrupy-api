@@ -8,14 +8,14 @@ class Credentials
     # If not found, will look for Rails.application.credentials.dig(:active_record_encryption, :primary_key)
     def get(*keys)
       # Construct an ENV key from the keys array for nested access
-      env_key = keys.map(&:to_s).join("_").upcase
-      env_value = ENV[env_key]
+      env_key = keys.map(&:to_s).join('_').upcase
+      env_value = ENV.fetch(env_key, nil)
 
       # Return the ENV value if it exists
       return env_value if env_value.present?
 
       # Otherwise, dig through Rails credentials
-      return Rails.application.credentials.dig(*keys)
+      Rails.application.credentials.dig(*keys)
     end
   end
-end 
+end

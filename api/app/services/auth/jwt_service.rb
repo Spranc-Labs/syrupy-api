@@ -25,12 +25,12 @@ class JwtService
   def self.refresh_access_token(refresh_token)
     payload = decode(refresh_token)
     return nil unless payload && payload[:type] == 'refresh'
-    
+
     # Generate new access token
     new_payload = { account_id: payload[:account_id] }
     encode(new_payload)
-  rescue => e
+  rescue StandardError => e
     Rails.logger.error "Refresh token error: #{e.message}"
     nil
   end
-end 
+end

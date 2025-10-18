@@ -9,16 +9,14 @@ module Api
 
       def index
         @goals = policy_scope(Goal)
-          .includes(:user)
-          .filter_by_text(params[:q])
+                 .includes(:user)
+                 .filter_by_text(params[:q])
 
         @goals = @goals.by_status(params[:status]) if params[:status].present?
         @goals = @goals.by_priority(params[:priority]) if params[:priority].present?
 
         # Filter by due date
-        if params[:due_soon].present?
-          @goals = @goals.where('target_date <= ?', 7.days.from_now)
-        end
+        @goals = @goals.where('target_date <= ?', 7.days.from_now) if params[:due_soon].present?
 
         # Filter by date range
         if params[:start_date].present? && params[:end_date].present?
@@ -28,8 +26,8 @@ module Api
         end
 
         @goals = @goals
-          .order(:target_date, :created_at)
-          .paginate(page: params[:page], per_page: params[:per_page] || 20)
+                 .order(:target_date, :created_at)
+                 .paginate(page: params[:page], per_page: params[:per_page] || 20)
 
         render json: GoalBlueprint.render(@goals)
       end
@@ -173,39 +171,39 @@ module Api
 
       def recent_completions_for_user
         current_user.goals
-          .where(status: 'completed')
-          .where('updated_at >= ?', 30.days.ago)
-          .order(updated_at: :desc)
-          .limit(5)
-          .pluck(:title, :updated_at)
+                    .where(status: 'completed')
+                    .where('updated_at >= ?', 30.days.ago)
+                    .order(updated_at: :desc)
+                    .limit(5)
+                    .pluck(:title, :updated_at)
       end
 
       def upcoming_goals_for_user
         current_user.goals
-          .where('target_date >= ? AND target_date <= ?', Date.current, 7.days.from_now)
-          .where.not(status: 'completed')
-          .order(:target_date)
-          .limit(5)
+                    .where('target_date >= ? AND target_date <= ?', Date.current, 7.days.from_now)
+                    .where.not(status: 'completed')
+                    .order(:target_date)
+                    .limit(5)
       end
 
       def overdue_goals_for_user
         current_user.goals
-          .where('target_date < ?', Date.current)
-          .where.not(status: 'completed')
-          .order(:target_date)
-          .limit(5)
+                    .where('target_date < ?', Date.current)
+                    .where.not(status: 'completed')
+                    .order(:target_date)
+                    .limit(5)
       end
 
       def goals_by_priority_for_user
         current_user.goals
-          .group(:priority)
-          .count
+                    .group(:priority)
+                    .count
       end
 
       def goals_by_status_for_user
         current_user.goals
-          .group(:status)
-          .count
+                    .group(:status)
+                    .count
       end
     end
   end

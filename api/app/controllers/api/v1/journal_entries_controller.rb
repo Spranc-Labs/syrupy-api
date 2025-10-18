@@ -8,28 +8,30 @@ module Api
 
     def index
       @journal_entries = policy_scope(JournalEntry)
-        .includes(:tags, :emotion_label_analysis, :journal_label_analysis)
-        .filter_by_text(params[:search])
-        .recent
-        .paginate(page: params[:page], per_page: 20)
+                         .includes(:tags, :emotion_label_analysis, :journal_label_analysis)
+                         .filter_by_text(params[:search])
+                         .recent
+                         .paginate(page: params[:page], per_page: 20)
 
       # Filter by emotion if provided
       if params[:emotion].present?
         @journal_entries = @journal_entries.joins(:emotion_label_analysis)
-                                          .where(emotion_label_analyses: { top_emotion: params[:emotion] })
+                                           .where(emotion_label_analyses: { top_emotion: params[:emotion] })
       end
 
-      # Filter by category if provided  
+      # Filter by category if provided
       if params[:category].present?
         @journal_entries = @journal_entries.joins(:journal_label_analysis)
-                                          .where("journal_label_analyses.payload->>'category' = ?", params[:category])
+                                           .where("journal_label_analyses.payload->>'category' = ?", params[:category])
       end
 
-      render json: JournalEntryBlueprint.render(@journal_entries, include: [:tags, :emotion_label_analysis, :journal_label_analysis])
+      render json: JournalEntryBlueprint.render(@journal_entries,
+                                                include: [:tags, :emotion_label_analysis, :journal_label_analysis])
     end
 
     def show
-      render json: JournalEntryBlueprint.render(@journal_entry, include: [:tags, :emotion_label_analysis, :journal_label_analysis])
+      render json: JournalEntryBlueprint.render(@journal_entry,
+                                                include: [:tags, :emotion_label_analysis, :journal_label_analysis])
     end
 
     def create
@@ -79,8 +81,8 @@ module Api
       # Check if journal-analysis-api is available
       begin
         test_response = JournalAnalysisApiClient.analyze(
-          title: "Health check",
-          content: "Testing connection"
+          title: 'Health check',
+          content: 'Testing connection'
         )
         service_available = test_response.present?
       rescue StandardError
@@ -98,26 +100,26 @@ module Api
     # Get emotion statistics for user's journal entries
     def emotion_stats
       authorize JournalEntry
-      
+
       stats = current_user.journal_entries
-                         .joins(:emotion_label_analysis)
-                         .where.not(emotion_label_analyses: { top_emotion: nil })
-                         .group('emotion_label_analyses.top_emotion')
-                         .count
-      
+                          .joins(:emotion_label_analysis)
+                          .where.not(emotion_label_analyses: { top_emotion: nil })
+                          .group('emotion_label_analyses.top_emotion')
+                          .count
+
       render json: { emotion_stats: stats, total_analyzed: stats.values.sum }
     end
 
     # Get category statistics for user's journal entries
     def category_stats
       authorize JournalEntry
-      
+
       stats = current_user.journal_entries
-                         .joins(:journal_label_analysis)
-                         .where.not("journal_label_analyses.payload->>'category' IS NULL")
-                         .group("journal_label_analyses.payload->>'category'")
-                         .count
-      
+                          .joins(:journal_label_analysis)
+                          .where.not("journal_label_analyses.payload->>'category' IS NULL")
+                          .group("journal_label_analyses.payload->>'category'")
+                          .count
+
       render json: { category_stats: stats, total_analyzed: stats.values.sum }
     end
 
@@ -139,7 +141,7 @@ module Api
       return unless analysis
 
       system_tags_to_create = []
-      
+
       # Add category as a system tag
       if analysis[:category].present?
         system_tags_to_create << {
@@ -147,7 +149,7 @@ module Api
           color: category_color(analysis[:category])
         }
       end
-      
+
       # Add subcategories as system tags if they exist
       if analysis[:subcategories]&.any?
         analysis[:subcategories].each do |subcategory|
@@ -157,7 +159,7 @@ module Api
           }
         end
       end
-      
+
       # Create or find system tags and associate them
       system_tags_to_create.uniq.each do |tag_data|
         tag = Tag.find_or_create_by(
@@ -166,7 +168,7 @@ module Api
         ) do |new_tag|
           new_tag.color = tag_data[:color]
         end
-        
+
         # Associate the tag with this journal entry if not already associated
         journal_entry.tags << tag unless journal_entry.tags.include?(tag)
       end
@@ -187,9 +189,5 @@ module Api
       }
       color_map[category] || '#6b7280'
     end
-
-
-
-
   end
 end

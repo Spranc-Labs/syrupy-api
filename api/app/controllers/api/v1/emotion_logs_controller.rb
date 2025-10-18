@@ -9,8 +9,8 @@ module Api
 
       def index
         @emotion_logs = policy_scope(EmotionLog)
-          .includes(:user)
-          .recent
+                        .includes(:user)
+                        .recent
 
         # Filter by emotion if provided
         @emotion_logs = @emotion_logs.by_emotion(params[:emotion]) if params[:emotion].present?
@@ -110,10 +110,10 @@ module Api
         start_date = days.days.ago.beginning_of_day
 
         daily_emotions = current_user.emotion_logs
-          .where(captured_at: start_date..Time.current)
-          .group("DATE(captured_at)")
-          .group(:emotion_label)
-          .count
+                                     .where(captured_at: start_date..Time.current)
+                                     .group('DATE(captured_at)')
+                                     .group(:emotion_label)
+                                     .count
 
         # Transform data for charting
         trends_data = {}
@@ -146,24 +146,24 @@ module Api
 
       def most_common_emotion_for_user
         current_user.emotion_logs
-          .group(:emotion_label)
-          .count
-          .max_by(&:last)
-          &.first
+                    .group(:emotion_label)
+                    .count
+                    .max_by(&:last)
+                    &.first
       end
 
       def emotion_distribution_for_user
         current_user.emotion_logs
-          .group(:emotion_label)
-          .count
+                    .group(:emotion_label)
+                    .count
       end
 
       def recent_streak_for_user
         # Calculate how many consecutive days user has logged emotions
         recent_logs = current_user.emotion_logs
-          .where('captured_at >= ?', 30.days.ago)
-          .group('DATE(captured_at)')
-          .count
+                                  .where('captured_at >= ?', 30.days.ago)
+                                  .group('DATE(captured_at)')
+                                  .count
 
         streak = 0
         date = Date.current
