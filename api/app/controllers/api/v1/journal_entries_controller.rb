@@ -76,12 +76,22 @@ module Api
     end
 
     def ai_service_status
+      # Check if journal-analysis-api is available
+      begin
+        test_response = JournalAnalysisApiClient.analyze(
+          title: "Health check",
+          content: "Testing connection"
+        )
+        service_available = test_response.present?
+      rescue StandardError
+        service_available = false
+      end
+
       status = {
-        service_available: JournalLabelerService.health_check,
-        available_categories: JournalLabelerService.available_categories,
+        service_available: service_available,
         timestamp: Time.current.iso8601
       }
-      
+
       render json: status
     end
 
