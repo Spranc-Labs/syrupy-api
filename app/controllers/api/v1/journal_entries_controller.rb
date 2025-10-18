@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
 module Api
-  class JournalEntriesController < ApiController
+  module V1
+    class JournalEntriesController < ApiController
     before_action :set_journal_entry, only: [:show, :update, :destroy, :analyze]
     before_action :authorize_journal_entry, only: [:show, :update, :destroy, :analyze]
     skip_after_action :verify_policy_scoped, only: [:ai_service_status, :show]
@@ -188,6 +189,7 @@ module Api
         'challenges_struggles' => '#7c3aed' # purple
       }
       color_map[category] || '#6b7280'
+    end
     end
   end
 end

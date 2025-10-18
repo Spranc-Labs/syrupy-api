@@ -1,5 +1,5 @@
 require_relative "boot"
-require_relative "../app/services/credentials"
+require_relative "../app/services/shared/credentials"
 
 require "rails"
 

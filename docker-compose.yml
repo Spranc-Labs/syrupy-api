@@ -8,14 +8,13 @@ x-backend-common: &backend-common
     PIDFILE: /tmp/pids/server.pid
     GEM_HOME: /api-bundle
     HISTFILE: /root/hist/.bash_history
-    JOURNAL_LABELER_SERVICE_URL: http://journal-labeler-service
   tty: true
   stdin_open: true
   tmpfs:
     - /tmp/
     - /tmp/pids/
   volumes:
-    - ./api:/app
+    - .:/app
     - "api_bundle:/api-bundle:rw,cached"
     - "api_history:/root/hist:rw,cached"
   depends_on:
@@ -26,15 +25,12 @@ services:
   api:
     <<: *backend-common
     build:
-      context: ./api
+      context: .
       dockerfile: Dockerfile.dev
     command: [ "bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000" ]
     ports:
       - "3000:3000"
     shm_size: 4g
-    depends_on:
-      journal-labeler-service:
-        condition: service_healthy
 
   good-job:
     <<: *backend-common
@@ -47,20 +43,6 @@ services:
       timeout: 5s
       retries: 5
 
-  frontend:
-    build:
-      context: ./app/frontend
-      dockerfile: Dockerfile
-    command: [ "npm", "run", "dev" ]
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./app/frontend:/app
-      - frontend_node_modules:/app/node_modules
-    depends_on:
-      api:
-        condition: service_started
-
   db:
     image: postgres:14-alpine
     volumes:
@@ -70,31 +52,12 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: syrupy_development
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
       test: pg_isready -U postgres -h 127.0.0.1
       interval: 5s
 
-  journal-labeler-service:
-    build:
-      context: ./journal-labeler-service
-      dockerfile: Dockerfile
-    ports:
-      - "8001:80"
-    volumes:
-      - ./journal-labeler-service:/app
-    environment:
-      - PYTHONPATH=/app
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost/health || exit 1"]
-      interval: 30s
-      timeout: 30s
-      start_period: 60s
-      retries: 3
-    restart: unless-stopped
-
 volumes:
   db_data:
   api_bundle:
-  api_history:
-  frontend_node_modules: 
+  api_history: 
