@@ -14,7 +14,7 @@ x-backend-common: &backend-common
     - /tmp/
     - /tmp/pids/
   volumes:
-    - ./api:/app
+    - .:/app
     - "api_bundle:/api-bundle:rw,cached"
     - "api_history:/root/hist:rw,cached"
   depends_on:
@@ -25,7 +25,7 @@ services:
   api:
     <<: *backend-common
     build:
-      context: ./api
+      context: .
       dockerfile: Dockerfile.dev
     command: [ "bundle", "exec", "rails", "server", "-b", "0.0.0.0", "-p", "3000" ]
     ports:
@@ -43,25 +43,6 @@ services:
       timeout: 5s
       retries: 5
 
-  frontend:
-    build:
-      context: ./app/frontend
-      dockerfile: Dockerfile
-    command: [ "npm", "run", "dev" ]
-    ports:
-      - "5173:5173"
-    volumes:
-      - ./app/frontend:/app
-      - frontend_node_modules:/app/node_modules
-    depends_on:
-      api:
-        condition: service_started
-    healthcheck:
-      test: [ "CMD-SHELL", "curl -f http://localhost:5173/ || exit 1" ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-
   db:
     image: postgres:14-alpine
     volumes:
@@ -71,7 +52,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: syrupy_development
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
       test: pg_isready -U postgres -h 127.0.0.1
       interval: 5s
@@ -79,5 +60,4 @@ services:
 volumes:
   db_data:
   api_bundle:
-  api_history:
-  frontend_node_modules: 
+  api_history: 
