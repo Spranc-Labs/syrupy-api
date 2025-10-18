@@ -1,6 +1,4 @@
-require 'net/http'
-require 'uri'
-require 'json'
+# frozen_string_literal: true
 
 module Api
   class JournalEntriesController < ApiController
@@ -39,10 +37,10 @@ module Api
       authorize @journal_entry
 
       if @journal_entry.save
-        # Trigger async analysis if service is available
-        AnalyzeJournalEntryJob.perform_later(@journal_entry.id)
-        
-        render json: JournalEntryBlueprint.render(@journal_entry, include: [:tags]), status: :created
+        render json: JournalEntryBlueprint.render(
+          @journal_entry,
+          include: [:tags]
+        ), status: :created
       else
         render json: { errors: @journal_entry.errors }, status: :unprocessable_entity
       end
@@ -50,14 +48,12 @@ module Api
 
     def update
       authorize @journal_entry
-      
+
       if @journal_entry.update(journal_entry_params)
-        # Re-analyze if content changed
-        if @journal_entry.saved_change_to_content? || @journal_entry.saved_change_to_title?
-          AnalyzeJournalEntryJob.perform_later(@journal_entry.id)
-        end
-        
-        render json: JournalEntryBlueprint.render(@journal_entry, include: [:tags, :emotion_label_analysis, :journal_label_analysis])
+        render json: JournalEntryBlueprint.render(
+          @journal_entry,
+          include: [:tags, :emotion_label_analysis, :journal_label_analysis]
+        )
       else
         render json: { errors: @journal_entry.errors }, status: :unprocessable_entity
       end
@@ -69,58 +65,14 @@ module Api
     end
 
     def analyze
-      # Force re-analysis of the journal entry
-      start_time = Time.current
-      
-      begin
-        analysis_result = JournalLabelerService.analyze_journal_entry(
-          title: @journal_entry.title,
-          content: @journal_entry.content
-        )
-        
-        processing_time = ((Time.current - start_time) * 1000).round(2)
-        
-        # Create emotion analysis record
-        emotion_analysis = @journal_entry.emotion_label_analyses.create!(
-          analysis_model: 'journal_labeler',
-          model_version: '1.0',
-          payload: analysis_result[:emotions] || {},
-          top_emotion: analysis_result[:mood_label],
-          run_ms: processing_time,
-          analyzed_at: Time.current
-        )
-        
-        # Create category analysis record
-        journal_analysis = @journal_entry.journal_label_analyses.create!(
-          analysis_model: 'journal_labeler',
-          model_version: '1.0', 
-          payload: {
-            category: analysis_result[:category],
-            confidence: analysis_result[:category_confidence],
-            subcategories: analysis_result[:subcategories] || []
-          },
-          run_ms: processing_time,
-          analyzed_at: Time.current
-        )
-        
-        # Create system tags from analysis
-        create_system_tags_from_analysis(@journal_entry, analysis_result)
-        
-        # Update journal entry with latest analyses
-        @journal_entry.update!(
-          emotion_label_analysis: emotion_analysis,
-          journal_label_analysis: journal_analysis
-        )
-        
-        render json: {
-          message: 'Analysis completed successfully',
-          data: JournalEntryBlueprint.render(@journal_entry, include: [:tags, :emotion_label_analysis, :journal_label_analysis]),
-          processing_time_ms: processing_time
-        }
-      rescue StandardError => e
-        Rails.logger.error "Analysis failed: #{e.message}"
-        render json: { error: 'Failed to analyze journal entry', details: e.message }, status: :unprocessable_entity
-      end
+      # Queue analysis job (non-blocking)
+      AnalyzeJournalEntryJob.perform_later(@journal_entry.id)
+
+      render json: {
+        message: 'Analysis queued successfully',
+        entry_id: @journal_entry.id,
+        status: 'pending'
+      }, status: :accepted
     end
 
     def ai_service_status

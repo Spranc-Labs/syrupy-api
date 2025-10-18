@@ -22,9 +22,8 @@ class JournalEntry < ApplicationRecord
   validates :title, presence: true
   validates :content, presence: true
 
-  # Journal labeling callbacks
-  after_create :analyze_with_ai_async
-  after_update :analyze_with_ai_async, if: :should_reanalyze?
+  # Note: Journal analysis is now triggered manually via API endpoint
+  # See app/controllers/api/journal_entries_controller.rb for analyze action
 
   # Serialization for AI emotions data
   serialize :ai_emotions, coder: JSON
@@ -90,49 +89,6 @@ class JournalEntry < ApplicationRecord
     emotion_label_analysis.present? && journal_label_analysis.present?
   end
 
-  def analyze_with_ai!
-    Rails.logger.info "Analyzing journal entry #{id} with journal labeler service"
-    
-    analysis = JournalLabelerService.analyze_journal_entry(
-      title: title,
-      content: content
-    )
-    
-    # Create emotion analysis
-    emotion_analysis = emotion_label_analyses.create!(
-      analysis_model: 'emotion_classifier',
-      model_version: '1.0',
-      payload: analysis[:emotions] || {},
-      top_emotion: analysis[:mood_label],
-      run_ms: analysis[:processing_time_ms],
-      analyzed_at: Time.current
-    )
-    
-    # Create journal analysis  
-    journal_analysis = journal_label_analyses.create!(
-      analysis_model: 'category_classifier',
-      model_version: '1.0', 
-      payload: { category: analysis[:category] },
-      run_ms: analysis[:processing_time_ms],
-      analyzed_at: Time.current
-    )
-    
-    # Link the latest analyses to this journal entry
-    update!(
-      emotion_label_analysis: emotion_analysis,
-      journal_label_analysis: journal_analysis
-    )
-    
-    # Create system tags from analysis
-    create_system_tags_from_analysis(analysis)
-    
-    Rails.logger.info "Journal labeling completed for journal entry #{id}"
-    analysis
-  rescue StandardError => e
-    Rails.logger.error "Failed to analyze journal entry #{id}: #{e.message}"
-    nil
-  end
-
   def current_category
     journal_label_analysis&.payload&.dig('category')
   end
@@ -160,16 +116,6 @@ class JournalEntry < ApplicationRecord
   end
 
   private
-
-  def should_reanalyze?
-    # Reanalyze if title or content changed
-    saved_change_to_title? || saved_change_to_content?
-  end
-
-  def analyze_with_ai_async
-    # Use background job for AI analysis to avoid blocking the request
-    AnalyzeJournalEntryJob.perform_later(id)
-  end
 
   def create_system_tags_from_analysis(analysis)
     return unless analysis
