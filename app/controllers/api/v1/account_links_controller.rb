@@ -72,9 +72,10 @@ module Api
         end
       rescue StandardError => e
         Rails.logger.error("Failed to link HeyHo account: #{e.message}")
+        Rails.logger.error(e.backtrace.join("\n"))
         render json: {
           success: false,
-          error: 'Failed to link HeyHo account. Please try again.'
+          error: Rails.env.development? ? e.message : 'Failed to link HeyHo account. Please try again.'
         }, status: :internal_server_error
       end
 
