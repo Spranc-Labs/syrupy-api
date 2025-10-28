@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_06_30_162912) do
+ActiveRecord::Schema[7.1].define(version: 2025_10_28_215559) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "plpgsql"
@@ -375,9 +375,12 @@ ActiveRecord::Schema[7.1].define(version: 2025_06_30_162912) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.datetime "discarded_at"
+    t.integer "heyho_user_id"
+    t.datetime "heyho_linked_at"
     t.index ["account_id"], name: "index_users_on_account_id"
     t.index ["discarded_at"], name: "index_users_on_discarded_at"
     t.index ["email"], name: "index_users_on_email", unique: true
+    t.index ["heyho_user_id"], name: "index_users_on_heyho_user_id", unique: true
   end
 
   add_foreign_key "account_active_session_keys", "accounts"

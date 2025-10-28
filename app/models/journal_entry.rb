@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class JournalEntry < ApplicationRecord
+  include Discard::Model
+
   audited
 
   belongs_to :user

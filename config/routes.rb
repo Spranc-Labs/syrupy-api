@@ -84,6 +84,14 @@ Rails.application.routes.draw do
         end
       end
 
+      # HeyHo account linking
+      resources :account_links, only: [:create, :destroy] do
+        collection do
+          get :status
+          post :callback
+        end
+      end
+
       get "me" => "me#show"
       put "me" => "me#update"
     end

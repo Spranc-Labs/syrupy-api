@@ -3,9 +3,9 @@
 module Api
   module V1
     class JournalEntriesController < ApiController
-    before_action :set_journal_entry, only: [:show, :update, :destroy, :analyze]
-    before_action :authorize_journal_entry, only: [:show, :update, :destroy, :analyze]
-    skip_after_action :verify_policy_scoped, only: [:ai_service_status, :show]
+      before_action :set_journal_entry, only: %i[show update destroy analyze]
+      before_action :authorize_journal_entry, only: %i[show update destroy analyze]
+      skip_after_action :verify_policy_scoped, only: %i[ai_service_status show]
 
     def index
       @journal_entries = policy_scope(JournalEntry)
@@ -50,21 +50,22 @@ module Api
     end
 
     def update
-      authorize @journal_entry
-
       if @journal_entry.update(journal_entry_params)
         render json: JournalEntryBlueprint.render(
           @journal_entry,
-          include: [:tags, :emotion_label_analysis, :journal_label_analysis]
+          include: %i[tags emotion_label_analysis journal_label_analysis]
         )
       else
-        render json: { errors: @journal_entry.errors }, status: :unprocessable_entity
+        render json: { errors: @journal_entry.errors.full_messages }, status: :unprocessable_entity
       end
     end
 
     def destroy
-      @journal_entry.discard
-      head :no_content
+      if @journal_entry.discard
+        head :no_content
+      else
+        render json: { errors: @journal_entry.errors.full_messages }, status: :unprocessable_entity
+      end
     end
 
     def analyze
