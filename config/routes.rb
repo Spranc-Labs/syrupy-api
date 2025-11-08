@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Rails.application.routes.draw do
   # Rodauth routes are implicitly defined. You can see them by
   # running `rails rodauth:routes` in your terminal.
@@ -73,7 +75,23 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :resources
+      resources :collections do
+        collection do
+          patch :reorder
+        end
+      end
+
+      resources :bookmarks do
+        collection do
+          post :from_heyho
+          patch :bulk_update
+        end
+        member do
+          patch :mark_as_read
+          patch :archive
+          patch :favorite
+        end
+      end
 
       resources :tags
 
@@ -84,26 +102,30 @@ Rails.application.routes.draw do
         end
       end
 
+      # Browsing sessions (tabs) from HeyHo
+      resources :browsing_sessions, only: [:index]
+
       # HeyHo account linking
-      resources :account_links, only: [:create, :destroy] do
+      resources :account_links, only: [:create] do
         collection do
           get :status
           post :callback
+          delete :destroy
         end
       end
 
-      get "me" => "me#show"
-      put "me" => "me#update"
+      get 'me' => 'me#show'
+      put 'me' => 'me#update'
     end
   end
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
   # Can be used by load balancers and uptime monitors to verify that the app is live.
-  get "up" => "rails/health#show", :as => :rails_health_check
+  get 'up' => 'rails/health#show', :as => :rails_health_check
 
   if Rails.env.development?
-    mount GoodJob::Engine, at: "admin/good_job"
-    mount PgHero::Engine, at: "admin/pghero"
-    mount LetterOpenerWeb::Engine, at: "/letter_opener"
+    mount GoodJob::Engine, at: 'admin/good_job'
+    mount PgHero::Engine, at: 'admin/pghero'
+    mount LetterOpenerWeb::Engine, at: '/letter_opener'
   end
-end 
+end

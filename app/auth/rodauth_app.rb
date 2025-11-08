@@ -6,4 +6,4 @@ class RodauthApp < Rodauth::Rails::App
   route do |r|
     r.rodauth(:main) # route rodauth requests
   end
-end 
+end

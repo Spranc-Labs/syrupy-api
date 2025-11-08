@@ -10,4 +10,4 @@ class UserBlueprint < ApplicationBlueprint
   field :username do |user|
     user.email
   end
-end 
+end

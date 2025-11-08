@@ -19,4 +19,4 @@ class EmotionLabelAnalysisBlueprint < ApplicationBlueprint
   field :confidence do |analysis|
     analysis.confidence_score
   end
-end 
+end

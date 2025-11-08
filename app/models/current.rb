@@ -11,4 +11,4 @@ class Current < ActiveSupport::CurrentAttributes
     super
     self.account = user&.account
   end
-end 
+end

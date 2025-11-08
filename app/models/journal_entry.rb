@@ -11,13 +11,13 @@ class JournalEntry < ApplicationRecord
 
   # New analysis associations
   belongs_to :emotion_label_analysis,
-             class_name:  "EmotionLabelAnalysis",
-             optional:    true,
+             class_name: 'EmotionLabelAnalysis',
+             optional: true,
              foreign_key: :emotion_label_analysis_id
 
   belongs_to :journal_label_analysis,
-             class_name:  "JournalLabelAnalysis",
-             optional:    true,
+             class_name: 'JournalLabelAnalysis',
+             optional: true,
              foreign_key: :journal_label_analysis_id
 
   has_many :emotion_label_analyses,  dependent: :destroy
@@ -26,54 +26,49 @@ class JournalEntry < ApplicationRecord
   validates :title, presence: true
   validates :content, presence: true
 
-  # Note: Journal analysis is now triggered manually via API endpoint
+  # NOTE: Journal analysis is now triggered manually via API endpoint
   # See app/controllers/api/journal_entries_controller.rb for analyze action
 
   # Serialization for AI emotions data
   serialize :ai_emotions, coder: JSON
 
-  scope :filter_by_text, ->(text) {
-    if text.present?
-      search_by_keywords(text)
-    end
+  scope :filter_by_text, lambda { |text|
+    search_by_keywords(text) if text.present?
   }
 
-  scope :search_by_keywords, ->(query) {
+  scope :search_by_keywords, lambda { |query|
     return all if query.blank?
-    
+
     # Split query into individual terms and clean them
     terms = query.downcase.split(/\s+/).map(&:strip).reject(&:blank?)
     return all if terms.empty?
-    
+
     # Build search conditions for each term
-    conditions = terms.map do |term|
-      sanitized_term = "%#{sanitize_sql_like(term)}%"
-      "(title ILIKE ? OR content ILIKE ?)"
-    end.join(" AND ")
-    
+    conditions = terms.map do |_term|
+      '(title ILIKE ? OR content ILIKE ?)'
+    end.join(' AND ')
+
     # Flatten the parameters array
     params = terms.flat_map do |term|
       sanitized_term = "%#{sanitize_sql_like(term)}%"
       [sanitized_term, sanitized_term]
     end
-    
+
     where(conditions, *params)
-      .select("journal_entries.*")
+      .select('journal_entries.*')
       .select(search_rank_sql(terms))
-      .order("search_rank DESC, created_at DESC")
+      .order('search_rank DESC, created_at DESC')
   }
 
-
-
-  scope :by_ai_mood_range, ->(min, max) {
+  scope :by_ai_mood_range, lambda { |min, max|
     where(ai_mood_score: min..max) if min.present? && max.present?
   }
 
-  scope :by_ai_category, ->(category) {
+  scope :by_ai_category, lambda { |category|
     where(ai_category: category) if category.present?
   }
 
-  scope :by_date_range, ->(start_date, end_date) {
+  scope :by_date_range, lambda { |start_date, end_date|
     where(created_at: start_date..end_date) if start_date.present? && end_date.present?
   }
 
@@ -82,7 +77,7 @@ class JournalEntry < ApplicationRecord
   scope :analyzed, -> { where.not(emotion_label_analysis_id: nil, journal_label_analysis_id: nil) }
 
   def formatted_date
-    created_at.strftime("%B %d, %Y")
+    created_at.strftime('%B %d, %Y')
   end
 
   def word_count
@@ -102,8 +97,8 @@ class JournalEntry < ApplicationRecord
   end
 
   def primary_emotion
-    return nil unless emotion_label_analysis&.payload&.is_a?(Hash)
-    
+    return nil unless emotion_label_analysis&.payload.is_a?(Hash)
+
     emotion_label_analysis.payload.max_by { |_, score| score }&.first
   end
 
@@ -114,7 +109,7 @@ class JournalEntry < ApplicationRecord
       'surprise' => '😲', 'disgust' => '🤢', 'anticipation' => '🤔',
       'trust' => '🤗', 'optimism' => '🌟', 'pessimism' => '😞'
     }
-    
+
     emotion = primary_emotion
     emotion_emojis[emotion] || '❓'
   end
@@ -125,7 +120,7 @@ class JournalEntry < ApplicationRecord
     return unless analysis
 
     system_tags_to_create = []
-    
+
     # Add category as a system tag
     if analysis[:category].present?
       system_tags_to_create << {
@@ -133,7 +128,7 @@ class JournalEntry < ApplicationRecord
         color: category_color(analysis[:category])
       }
     end
-    
+
     # Add subcategories as system tags if they exist
     if analysis[:subcategories]&.any?
       analysis[:subcategories].each do |subcategory|
@@ -143,9 +138,7 @@ class JournalEntry < ApplicationRecord
         }
       end
     end
-    
 
-    
     # Create or find system tags and associate them
     system_tags_to_create.uniq.each do |tag_data|
       tag = Tag.find_or_create_by(
@@ -154,7 +147,7 @@ class JournalEntry < ApplicationRecord
       ) do |new_tag|
         new_tag.color = tag_data[:color]
       end
-      
+
       # Associate the tag with this journal entry if not already associated
       tags << tag unless tags.include?(tag)
     end
@@ -176,18 +169,16 @@ class JournalEntry < ApplicationRecord
     color_map[category] || '#6b7280'
   end
 
-
-
   def self.search_rank_sql(terms)
     # Calculate relevance score based on:
     # - Title exact matches (highest weight)
-    # - Title partial matches (high weight)  
+    # - Title partial matches (high weight)
     # - Content matches (medium weight)
     # - Tag matches (medium weight)
     rank_parts = terms.map do |term|
       sanitized_term = sanitize_sql_like(term)
       escaped_term = "'%#{sanitized_term}%'"
-      
+
       <<~SQL
         (
           CASE WHEN LOWER(title) = LOWER('#{sanitized_term}') THEN 100
@@ -205,7 +196,7 @@ class JournalEntry < ApplicationRecord
         )
       SQL
     end
-    
+
     "(#{rank_parts.join(' + ')}) AS search_rank"
   end
-end 
+end

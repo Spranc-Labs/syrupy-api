@@ -14,12 +14,12 @@ class GoalBlueprint < ApplicationBlueprint
     :discarded_at,
     :completed?,
     :overdue?,
-    :days_remaining,
+    :days_remaining
   )
 
   association(
     :user,
     blueprint: UserBlueprint,
-    if: ->(*, options) { self.include_association?(options, :user) },
+    if: ->(*, options) { include_association?(options, :user) }
   )
-end 
+end

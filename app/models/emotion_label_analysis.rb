@@ -11,7 +11,7 @@ class EmotionLabelAnalysis < ApplicationRecord
   # Automatically derive top_emotion from payload after save
   after_save :update_top_emotion, if: :saved_change_to_payload?
 
-  scope :by_model, ->(name, version = nil) {
+  scope :by_model, lambda { |name, version = nil|
     scope = where(analysis_model: name)
     scope = scope.where(model_version: version) if version.present?
     scope
@@ -25,7 +25,7 @@ class EmotionLabelAnalysis < ApplicationRecord
 
   def confidence_score
     return 0 unless emotion_scores.any?
-    
+
     scores = emotion_scores.values.map(&:to_f)
     scores.max - scores.min
   end
@@ -38,4 +38,4 @@ class EmotionLabelAnalysis < ApplicationRecord
     top_emotion_key = payload.max_by { |_, score| score.to_f }&.first
     update_column(:top_emotion, top_emotion_key) if top_emotion_key
   end
-end 
+end

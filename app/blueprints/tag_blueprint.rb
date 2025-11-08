@@ -9,6 +9,6 @@ class TagBlueprint < ApplicationBlueprint
     :kind,
     :created_at,
     :updated_at,
-    :discarded_at,
+    :discarded_at
   )
-end 
+end

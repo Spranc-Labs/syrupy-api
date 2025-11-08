@@ -9,8 +9,8 @@ class Goal < ApplicationRecord
   validates :status, inclusion: { in: %w[active completed paused archived] }
   validates :priority, inclusion: { in: %w[low medium high] }
 
-  scope :filter_by_text, ->(text) {
-    where("title ILIKE ? OR description ILIKE ?", "%#{text}%", "%#{text}%") if text.present?
+  scope :filter_by_text, lambda { |text|
+    where('title ILIKE ? OR description ILIKE ?', "%#{text}%", "%#{text}%") if text.present?
   }
 
   scope :by_status, ->(status) { where(status: status) if status.present? }
@@ -18,7 +18,7 @@ class Goal < ApplicationRecord
   scope :due_soon, -> { where(target_date: Date.current..1.week.from_now) }
 
   def completed?
-    status == "completed"
+    status == 'completed'
   end
 
   def overdue?
@@ -27,6 +27,7 @@ class Goal < ApplicationRecord
 
   def days_remaining
     return nil unless target_date.present?
+
     (target_date - Date.current).to_i
   end
-end 
+end

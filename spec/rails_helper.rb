@@ -19,6 +19,17 @@ RSpec.configure do |config|
   config.infer_spec_type_from_file_location!
   config.filter_rails_from_backtrace!
 
+  # Include FactoryBot methods
+  config.include FactoryBot::Syntax::Methods
+
   # Disable external HTTP requests in tests
   WebMock.disable_net_connect!(allow_localhost: true)
+
+  # Set default host for request specs
+  config.before(:each, type: :request) do
+    host! 'api.test'
+  end
 end
+
+# Load support files
+Dir[Rails.root.join('spec', 'support', '**', '*.rb')].each { |f| require f }

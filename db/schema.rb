@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.1].define(version: 2025_10_28_215559) do
+ActiveRecord::Schema[7.1].define(version: 2025_11_02_221300) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "citext"
   enable_extension "plpgsql"
@@ -88,6 +88,61 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_28_215559) do
     t.index ["created_at"], name: "index_audits_on_created_at"
     t.index ["request_uuid"], name: "index_audits_on_request_uuid"
     t.index ["user_id", "user_type"], name: "user_index"
+  end
+
+  create_table "bookmark_tags", force: :cascade do |t|
+    t.bigint "bookmark_id", null: false
+    t.bigint "tag_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.datetime "discarded_at"
+    t.index ["bookmark_id", "tag_id"], name: "index_bookmark_tags_on_bookmark_id_and_tag_id", unique: true
+    t.index ["bookmark_id"], name: "index_bookmark_tags_on_bookmark_id"
+    t.index ["discarded_at"], name: "index_bookmark_tags_on_discarded_at"
+    t.index ["tag_id"], name: "index_bookmark_tags_on_tag_id"
+  end
+
+  create_table "bookmarks", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "collection_id"
+    t.string "url", null: false
+    t.string "title"
+    t.text "description"
+    t.text "note"
+    t.string "status", default: "unsorted"
+    t.datetime "saved_at", null: false
+    t.datetime "read_at"
+    t.datetime "archived_at"
+    t.jsonb "metadata", default: {}
+    t.string "source", default: "manual"
+    t.string "heyho_page_visit_id"
+    t.datetime "discarded_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["collection_id"], name: "index_bookmarks_on_collection_id"
+    t.index ["metadata"], name: "index_bookmarks_on_metadata", using: :gin
+    t.index ["saved_at"], name: "index_bookmarks_on_saved_at"
+    t.index ["source"], name: "index_bookmarks_on_source"
+    t.index ["status"], name: "index_bookmarks_on_status"
+    t.index ["url"], name: "index_bookmarks_on_url"
+    t.index ["user_id"], name: "index_bookmarks_on_user_id"
+  end
+
+  create_table "collections", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "name", null: false
+    t.string "icon"
+    t.string "color", default: "#6366f1"
+    t.text "description"
+    t.integer "position", default: 0
+    t.boolean "is_default", default: false
+    t.datetime "discarded_at"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["position"], name: "index_collections_on_position"
+    t.index ["user_id", "is_default"], name: "index_collections_on_user_id_and_is_default"
+    t.index ["user_id", "name"], name: "index_collections_on_user_id_and_name", unique: true, where: "(discarded_at IS NULL)"
+    t.index ["user_id"], name: "index_collections_on_user_id"
   end
 
   create_table "emotion_label_analyses", force: :cascade do |t|
@@ -316,45 +371,6 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_28_215559) do
     t.index ["user_id"], name: "index_mood_logs_on_user_id"
   end
 
-  create_table "resource_contents", force: :cascade do |t|
-    t.bigint "resource_id", null: false
-    t.text "content"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "discarded_at"
-    t.index ["discarded_at"], name: "index_resource_contents_on_discarded_at"
-    t.index ["resource_id"], name: "index_resource_contents_on_resource_id", unique: true
-  end
-
-  create_table "resource_tags", force: :cascade do |t|
-    t.bigint "resource_id", null: false
-    t.bigint "tag_id", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "discarded_at"
-    t.index ["discarded_at"], name: "index_resource_tags_on_discarded_at"
-    t.index ["resource_id", "tag_id"], name: "index_resource_tags_on_resource_id_and_tag_id", unique: true
-    t.index ["resource_id"], name: "index_resource_tags_on_resource_id"
-    t.index ["tag_id"], name: "index_resource_tags_on_tag_id"
-  end
-
-  create_table "resources", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.string "url", null: false
-    t.string "title"
-    t.integer "status", default: 0
-    t.datetime "scraped_at"
-    t.jsonb "metadata", default: {}
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.datetime "discarded_at"
-    t.index ["discarded_at"], name: "index_resources_on_discarded_at"
-    t.index ["metadata"], name: "index_resources_on_metadata", using: :gin
-    t.index ["status"], name: "index_resources_on_status"
-    t.index ["url"], name: "index_resources_on_url"
-    t.index ["user_id"], name: "index_resources_on_user_id"
-  end
-
   create_table "tags", force: :cascade do |t|
     t.string "name", null: false
     t.string "color", default: "#6366f1"
@@ -391,6 +407,11 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_28_215559) do
   add_foreign_key "account_password_reset_keys", "accounts", column: "id"
   add_foreign_key "account_remember_keys", "accounts", column: "id"
   add_foreign_key "account_verification_keys", "accounts", column: "id"
+  add_foreign_key "bookmark_tags", "bookmarks"
+  add_foreign_key "bookmark_tags", "tags"
+  add_foreign_key "bookmarks", "collections"
+  add_foreign_key "bookmarks", "users"
+  add_foreign_key "collections", "users"
   add_foreign_key "emotion_label_analyses", "journal_entries"
   add_foreign_key "emotion_logs", "users"
   add_foreign_key "goals", "users"
@@ -404,9 +425,5 @@ ActiveRecord::Schema[7.1].define(version: 2025_10_28_215559) do
   add_foreign_key "journal_entry_tags", "tags"
   add_foreign_key "journal_label_analyses", "journal_entries"
   add_foreign_key "mood_logs", "users"
-  add_foreign_key "resource_contents", "resources"
-  add_foreign_key "resource_tags", "resources"
-  add_foreign_key "resource_tags", "tags"
-  add_foreign_key "resources", "users"
   add_foreign_key "users", "accounts"
 end

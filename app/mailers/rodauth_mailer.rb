@@ -4,7 +4,7 @@ class RodauthMailer < ApplicationMailer
   # To have a good performance, you should avoid loading the whole
   # rodauth instance for each email, instead you should just load
   # what you need for each email.
-  default to: -> { @rodauth.email_to }, from: -> { "Syrupy <no-reply@syrupy.com>" }
+  default to: -> { @rodauth.email_to }, from: -> { 'Syrupy <no-reply@syrupy.com>' }
 
   def verify_account(name, account_id, key)
     @rodauth = rodauth(name, account_id) { @verify_account_key_value = key }
@@ -39,7 +39,7 @@ class RodauthMailer < ApplicationMailer
     @rodauth = rodauth(name, account_id)
     @account = @rodauth.rails_account
 
-    mail subject: @rodauth.email_subject_prefix + "Welcome to Syrupy!"
+    mail subject: "#{@rodauth.email_subject_prefix}Welcome to Syrupy!"
   end
 
   private
@@ -50,4 +50,4 @@ class RodauthMailer < ApplicationMailer
     instance.instance_eval(&block) if block
     instance
   end
-end 
+end

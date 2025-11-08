@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class ResourcePolicy < ApplicationPolicy
+class CollectionPolicy < ApplicationPolicy
   def index?
     true
   end
@@ -21,9 +21,13 @@ class ResourcePolicy < ApplicationPolicy
     record.user == user
   end
 
+  def reorder?
+    true
+  end
+
   class Scope < Scope
     def resolve
-      scope.where(user: user)
+      scope.where(user:)
     end
   end
-end 
+end

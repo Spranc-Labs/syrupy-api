@@ -38,4 +38,4 @@ class EmotionLogPolicy < ApplicationPolicy
   def quick_log?
     true
   end
-end 
+end

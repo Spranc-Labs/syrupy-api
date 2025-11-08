@@ -10,18 +10,18 @@ class HabitLogBlueprint < ApplicationBlueprint
     :created_at,
     :updated_at,
     :discarded_at,
-    :completed?,
+    :completed?
   )
 
   association(
     :user,
     blueprint: UserBlueprint,
-    if: ->(*, options) { self.include_association?(options, :user) },
+    if: ->(*, options) { include_association?(options, :user) }
   )
 
   association(
     :habit,
     blueprint: HabitBlueprint,
-    if: ->(*, options) { self.include_association?(options, :habit) },
+    if: ->(*, options) { include_association?(options, :habit) }
   )
 end

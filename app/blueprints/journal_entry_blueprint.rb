@@ -52,4 +52,4 @@ class JournalEntryBlueprint < ApplicationBlueprint
     blueprint: UserBlueprint,
     if: ->(*, options) { include_association?(options, :user) }
   )
-end 
+end
