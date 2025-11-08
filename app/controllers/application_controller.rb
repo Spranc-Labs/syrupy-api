@@ -10,7 +10,7 @@ class ApplicationController < ActionController::API
     super
     payload[:response_body] = response.body
     payload[:ip] = request.remote_ip
-    payload[:user_id] = Current.user&.id || "none"
-    payload[:user_name] = Current.user&.full_name || "none"
+    payload[:user_id] = Current.user&.id || 'none'
+    payload[:user_name] = Current.user&.full_name || 'none'
   end
-end 
+end

@@ -11,7 +11,7 @@ class HabitBlueprint < ApplicationBlueprint
     :created_at,
     :updated_at,
     :discarded_at,
-    :current_streak,
+    :current_streak
   )
 
   field :completion_rate_30_days do |habit|
@@ -21,12 +21,12 @@ class HabitBlueprint < ApplicationBlueprint
   association(
     :user,
     blueprint: UserBlueprint,
-    if: ->(*, options) { self.include_association?(options, :user) },
+    if: ->(*, options) { include_association?(options, :user) }
   )
 
   association(
     :habit_logs,
     blueprint: HabitLogBlueprint,
-    if: ->(*, options) { self.include_association?(options, :habit_logs) },
+    if: ->(*, options) { include_association?(options, :habit_logs) }
   )
-end 
+end

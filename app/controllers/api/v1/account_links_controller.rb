@@ -25,9 +25,9 @@ module Api
         redirect_uri = params[:redirect_uri] || "#{request.base_url}/auth/heyho/callback"
 
         authorize_url = "#{heyho_base_url}/api/v1/oauth/authorize?" \
-                       "client_id=#{CGI.escape(client_id)}&" \
-                       "redirect_uri=#{CGI.escape(redirect_uri)}&" \
-                       "scope=browsing_data:read"
+                        "client_id=#{CGI.escape(client_id)}&" \
+                        "redirect_uri=#{CGI.escape(redirect_uri)}&" \
+                        'scope=browsing_data:read'
 
         render json: {
           authorize_url: authorize_url,

@@ -1,15 +1,17 @@
-require "active_support/core_ext/integer/time"
+# frozen_string_literal: true
+
+require 'active_support/core_ext/integer/time'
 
 Rails.application.configure do
-  config.logger = if ENV["CI"] == "true"
-    # Log to file
-    ActiveSupport::Logger.new(Rails.root.join("log", "#{Rails.env}.log"))
-  else
-    # Log to stdout
-    ActiveSupport::Logger.new($stdout)
-      .tap { |logger| logger.formatter = ::Logger::Formatter.new }
-      .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
-  end
+  config.logger = if ENV['CI'] == 'true'
+                    # Log to file
+                    ActiveSupport::Logger.new(Rails.root.join('log', "#{Rails.env}.log"))
+                  else
+                    # Log to stdout
+                    ActiveSupport::Logger.new($stdout)
+                                         .tap { |logger| logger.formatter = Logger::Formatter.new }
+                                         .then { |logger| ActiveSupport::TaggedLogging.new(logger) }
+                  end
 
   ActiveRecord::Base.logger = config.logger
 
@@ -18,8 +20,8 @@ Rails.application.configure do
   # In the development environment your application's code is reloaded any time
   # it changes. This slows down response time but is perfect for development
   # since you don't have to restart the web server when you make code changes.
-  config.enable_reloading = ENV["EAGER_LOAD_CLASSES"] != "true"
-  config.eager_load = ENV["EAGER_LOAD_CLASSES"] == "true"
+  config.enable_reloading = ENV['EAGER_LOAD_CLASSES'] != 'true'
+  config.eager_load = ENV['EAGER_LOAD_CLASSES'] == 'true'
 
   # Show full error reports.
   config.consider_all_requests_local = true
@@ -70,10 +72,10 @@ Rails.application.configure do
   config.action_controller.raise_on_missing_callback_actions = true
 
   # Allow requests from Docker containers and localhost
-  config.hosts << "api"
-  config.hosts << "localhost"
-  config.hosts << "127.0.0.1"
-  config.hosts << "api:3000"
-  config.hosts << "localhost:3000"
-  config.hosts << "127.0.0.1:3000"
+  config.hosts << 'api'
+  config.hosts << 'localhost'
+  config.hosts << '127.0.0.1'
+  config.hosts << 'api:3000'
+  config.hosts << 'localhost:3000'
+  config.hosts << '127.0.0.1:3000'
 end

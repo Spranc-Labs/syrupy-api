@@ -12,17 +12,11 @@ class JournalLabelAnalysisBlueprint < ApplicationBlueprint
   )
 
   # Primary category label
-  field :label do |analysis|
-    analysis.primary_category
-  end
+  field :label, &:primary_category
 
   # Unpacked category scores
-  field :category_scores do |analysis|
-    analysis.category_scores
-  end
+  field :category_scores, &:category_scores
 
   # Confidence score derived from category scores
-  field :confidence do |analysis|
-    analysis.confidence_score
-  end
-end 
+  field :confidence, &:confidence_score
+end

@@ -54,4 +54,4 @@ class HabitPolicy < ApplicationPolicy
       scope.where(user: user)
     end
   end
-end 
+end

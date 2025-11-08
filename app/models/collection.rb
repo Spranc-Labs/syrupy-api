@@ -30,7 +30,7 @@ class Collection < ApplicationRecord
   private
 
   def set_default_color
-    self.color = "#6366f1"
+    self.color = '#6366f1'
   end
 
   def ensure_single_default

@@ -7,7 +7,5 @@ class UserBlueprint < ApplicationBlueprint
     "#{user.first_name} #{user.last_name}".strip
   end
 
-  field :username do |user|
-    user.email
-  end
-end 
+  field :username, &:email
+end

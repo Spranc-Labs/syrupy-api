@@ -185,7 +185,11 @@ class HeyhoApiService
           scope: data[:scope]
         }
       else
-        error_data = JSON.parse(response.body, symbolize_names: true) rescue {}
+        error_data = begin
+          JSON.parse(response.body, symbolize_names: true)
+        rescue StandardError
+          {}
+        end
         {
           success: false,
           error: error_data[:error_description] || error_data[:error] || 'Unknown error'

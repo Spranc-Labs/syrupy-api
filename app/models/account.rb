@@ -2,8 +2,8 @@
 
 # Not using ApplicationRecord to avoid automatic inclusion of discard gem
 class Account < ActiveRecord::Base
-  self.table_name = "accounts"
-  
+  self.table_name = 'accounts'
+
   has_secure_password
 
   module Status
@@ -15,7 +15,7 @@ class Account < ActiveRecord::Base
   enum status: {
     unverified: Status::UNVERIFIED,
     verified: Status::VERIFIED,
-    closed: Status::CLOSED,
+    closed: Status::CLOSED
   }
 
   has_one :user, dependent: :destroy
@@ -27,9 +27,7 @@ class Account < ActiveRecord::Base
     super&.downcase
   end
 
-  scope :filter_by_text, ->(query) {
-    if query.present?
-      where("email ilike :query", query: "%#{query}%")
-    end
+  scope :filter_by_text, lambda { |query|
+    where('email ilike :query', query: "%#{query}%") if query.present?
   }
-end 
+end

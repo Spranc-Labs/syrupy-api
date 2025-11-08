@@ -3,26 +3,26 @@
 module Api
   module V1
     class BookmarksController < ApiController
-      before_action :set_bookmark, only: %i[show update destroy mark_as_read archive favorite]
-      before_action :authorize_bookmark, only: %i[show update destroy mark_as_read archive favorite]
+      before_action :set_bookmark, only: [:show, :update, :destroy, :mark_as_read, :archive, :favorite]
+      before_action :authorize_bookmark, only: [:show, :update, :destroy, :mark_as_read, :archive, :favorite]
 
       # GET /api/v1/bookmarks
       def index
         @bookmarks = policy_scope(Bookmark)
-          .kept
-          .includes(:collection, :tags)
+                     .kept
+                     .includes(:collection, :tags)
 
         # Apply filters
         @bookmarks = @bookmarks.by_collection(params[:collection_id]) if params[:collection_id].present?
         @bookmarks = @bookmarks.by_tag(params[:tag_id]) if params[:tag_id].present?
         @bookmarks = @bookmarks.by_status(params[:status]) if params[:status].present?
-        @bookmarks = @bookmarks.from_heyho if params[:from_heyho] == "true"
+        @bookmarks = @bookmarks.from_heyho if params[:from_heyho] == 'true'
 
         # Apply search
         @bookmarks = apply_search(@bookmarks, params[:search]) if params[:search].present?
 
         # Apply sorting
-        @bookmarks = apply_sorting(@bookmarks, params[:sort_by] || "saved_at")
+        @bookmarks = apply_sorting(@bookmarks, params[:sort_by] || 'saved_at')
 
         # Paginate
         @bookmarks = @bookmarks.page(params[:page]).per(params[:per_page] || 20)
@@ -41,9 +41,7 @@ module Api
         authorize @bookmark
 
         # Handle tags
-        if params[:bookmark][:tag_names].present?
-          attach_tags_by_name(params[:bookmark][:tag_names])
-        end
+        attach_tags_by_name(params[:bookmark][:tag_names]) if params[:bookmark][:tag_names].present?
 
         if @bookmark.save
           render json: BookmarkBlueprint.render(@bookmark, view: :with_tags), status: :created
@@ -69,7 +67,7 @@ module Api
 
         # Attach tags
         if params[:tags].present?
-          tag_names = params[:tags].is_a?(Array) ? params[:tags] : params[:tags].split(",").map(&:strip)
+          tag_names = params[:tags].is_a?(Array) ? params[:tags] : params[:tags].split(',').map(&:strip)
           attach_tags_by_name(tag_names)
         end
 
@@ -83,9 +81,7 @@ module Api
       # PATCH/PUT /api/v1/bookmarks/:id
       def update
         # Handle tags separately
-        if params[:bookmark][:tag_names].present?
-          update_tags_by_name(params[:bookmark][:tag_names])
-        end
+        update_tags_by_name(params[:bookmark][:tag_names]) if params[:bookmark][:tag_names].present?
 
         if @bookmark.update(bookmark_params)
           render json: BookmarkBlueprint.render(@bookmark, view: :with_tags)
@@ -123,11 +119,11 @@ module Api
 
       # PATCH /api/v1/bookmarks/:id/favorite
       def favorite
-        if params[:unfavorite] == "true"
-          success = @bookmark.unfavorite!
-        else
-          success = @bookmark.favorite!
-        end
+        success = if params[:unfavorite] == 'true'
+                    @bookmark.unfavorite!
+                  else
+                    @bookmark.favorite!
+                  end
 
         if success
           render json: BookmarkBlueprint.render(@bookmark)
@@ -145,16 +141,16 @@ module Api
           bookmarks = current_user.bookmarks.where(id: bookmark_ids)
 
           case action
-          when "move_to_collection"
+          when 'move_to_collection'
             bookmarks.update_all(collection_id: params[:collection_id])
-          when "add_tags"
+          when 'add_tags'
             tag_names = params[:tag_names] || []
             tags = find_or_create_tags(tag_names)
             bookmarks.each { |bookmark| bookmark.tags << tags }
-          when "mark_as_read"
-            bookmarks.update_all(status: "read", read_at: Time.current)
-          when "archive"
-            bookmarks.update_all(status: "archived", archived_at: Time.current)
+          when 'mark_as_read'
+            bookmarks.update_all(status: 'read', read_at: Time.current)
+          when 'archive'
+            bookmarks.update_all(status: 'archived', archived_at: Time.current)
           else
             raise ArgumentError, "Invalid action: #{action}"
           end
@@ -188,26 +184,26 @@ module Api
           title: params[:title],
           description: params[:description],
           metadata: params[:metadata] || {},
-          source: "heyho",
+          source: 'heyho',
           heyho_page_visit_id: params[:page_visit_id]
         }
       end
 
       def attach_tags_by_name(tag_names)
-        tag_names = tag_names.is_a?(Array) ? tag_names : tag_names.split(",").map(&:strip)
+        tag_names = tag_names.split(',').map(&:strip) unless tag_names.is_a?(Array)
         tags = find_or_create_tags(tag_names)
         @bookmark.tags = tags
       end
 
       def update_tags_by_name(tag_names)
-        tag_names = tag_names.is_a?(Array) ? tag_names : tag_names.split(",").map(&:strip)
+        tag_names = tag_names.split(',').map(&:strip) unless tag_names.is_a?(Array)
         tags = find_or_create_tags(tag_names)
         @bookmark.tags = tags
       end
 
       def find_or_create_tags(tag_names)
         tag_names.map do |name|
-          Tag.find_or_create_by!(name: name.strip, kind: "user")
+          Tag.find_or_create_by!(name: name.strip, kind: 'user')
         end
       end
 
@@ -220,13 +216,13 @@ module Api
 
       def apply_sorting(scope, sort_by)
         case sort_by
-        when "saved_at"
+        when 'saved_at'
           scope.order(saved_at: :desc)
-        when "read_at"
+        when 'read_at'
           scope.order(read_at: :desc)
-        when "title"
+        when 'title'
           scope.order(title: :asc)
-        when "url"
+        when 'url'
           scope.order(url: :asc)
         else
           scope.order(saved_at: :desc)

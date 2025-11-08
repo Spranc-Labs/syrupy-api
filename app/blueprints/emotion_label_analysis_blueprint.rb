@@ -12,11 +12,7 @@ class EmotionLabelAnalysisBlueprint < ApplicationBlueprint
     :updated_at
   )
 
-  field :emotion_scores do |analysis|
-    analysis.emotion_scores
-  end
+  field :emotion_scores, &:emotion_scores
 
-  field :confidence do |analysis|
-    analysis.confidence_score
-  end
-end 
+  field :confidence, &:confidence_score
+end

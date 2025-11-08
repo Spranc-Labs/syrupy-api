@@ -10,4 +10,4 @@ class RodauthController < ApplicationController
   def current_user
     current_account&.user
   end
-end 
+end

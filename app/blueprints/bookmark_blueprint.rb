@@ -6,17 +6,13 @@ class BookmarkBlueprint < Blueprinter::Base
   fields :url, :title, :description, :note, :status, :source, :heyho_page_visit_id,
          :saved_at, :read_at, :archived_at, :created_at, :updated_at, :metadata
 
-  field :domain do |bookmark|
-    bookmark.extract_domain
-  end
+  field :domain, &:extract_domain
 
   association :collection, blueprint: CollectionBlueprint
 
   view :compact do
     fields :id, :url, :title, :status, :saved_at
-    field :domain do |bookmark|
-      bookmark.extract_domain
-    end
+    field :domain, &:extract_domain
   end
 
   view :with_tags do

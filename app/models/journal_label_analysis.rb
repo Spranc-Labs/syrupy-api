@@ -8,7 +8,7 @@ class JournalLabelAnalysis < ApplicationRecord
   validates :analyzed_at, presence: true
   validates :payload, presence: true
 
-  scope :by_model, ->(name, version = nil) {
+  scope :by_model, lambda { |name, version = nil|
     scope = where(analysis_model: name)
     scope = scope.where(model_version: version) if version.present?
     scope
@@ -21,19 +21,19 @@ class JournalLabelAnalysis < ApplicationRecord
   end
 
   def primary_category
-    categories.dig('category')
+    categories['category']
   end
 
   def category_scores
     return {} unless payload.is_a?(Hash)
-    
+
     payload.select { |k, v| k != 'category' && v.is_a?(Numeric) }
   end
 
   def confidence_score
     scores = category_scores.values.map(&:to_f)
     return 0 unless scores.any?
-    
+
     scores.max - scores.min
   end
-end 
+end

@@ -12,7 +12,7 @@ class RodauthMain < Rodauth::Rails::Auth
     only_json? true
 
     # Use path prefix for all routes
-    prefix "/auth"
+    prefix '/auth'
 
     # Specify the controller used for view rendering, CSRF, and callbacks
     rails_controller { RodauthController }
@@ -24,7 +24,7 @@ class RodauthMain < Rodauth::Rails::Auth
     account_password_hash_column :password_hash
 
     # Change some default param keys for cleaner API
-    login_param "email"
+    login_param 'email'
 
     # Handle login and password confirmation fields on the client side
     require_password_confirmation? false
@@ -35,17 +35,17 @@ class RodauthMain < Rodauth::Rails::Auth
 
     # ==> Session Management
     # Session key prefix
-    session_key_prefix "syrupy_"
+    session_key_prefix 'syrupy_'
 
     # ==> Email Configuration (for development)
-    email_subject_prefix "Syrupy: "
+    email_subject_prefix 'Syrupy: '
 
     # ==> Hooks
     # Validate custom fields in the create account form
     before_create_account do
-      throw_error_status(422, "First name", "must be present") if param("first_name").blank?
-      throw_error_status(422, "Last name", "must be present") if param("last_name").blank?
-      throw_error_status(422, "Email", "must be present") if param("email").blank?
+      throw_error_status(422, 'First name', 'must be present') if param('first_name').blank?
+      throw_error_status(422, 'Last name', 'must be present') if param('last_name').blank?
+      throw_error_status(422, 'Email', 'must be present') if param('email').blank?
     end
 
     # Perform additional actions after the account is created
@@ -53,9 +53,9 @@ class RodauthMain < Rodauth::Rails::Auth
       # Create associated User record
       User.create!(
         account_id: account_id,
-        first_name: param("first_name"),
-        last_name: param("last_name"),
-        email: param("email")
+        first_name: param('first_name'),
+        last_name: param('last_name'),
+        email: param('email')
       )
     end
 
@@ -63,7 +63,7 @@ class RodauthMain < Rodauth::Rails::Auth
     create_account_autologin? true
 
     # ==> Redirects (for JSON API, these won't be used but good to have)
-    login_redirect { "/" }
-    logout_redirect { "/" }
+    login_redirect { '/' }
+    logout_redirect { '/' }
   end
-end 
+end

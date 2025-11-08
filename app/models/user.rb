@@ -19,20 +19,20 @@ class User < ApplicationRecord
 
   after_create :create_default_collection
 
-  scope :filter_by_text, ->(query) {
+  scope :filter_by_text, lambda { |query|
     if query.present?
       where(
-        "users.first_name ilike :query or " \
-        "users.last_name ilike :query or " \
-        "users.email ilike :query or " \
+        'users.first_name ilike :query or ' \
+        'users.last_name ilike :query or ' \
+        'users.email ilike :query or ' \
         "concat_ws(' ', users.first_name, users.last_name) ilike :query",
-        query: "%#{query}%",
+        query: "%#{query}%"
       )
     end
   }
 
   def full_name
-    [first_name, last_name].select(&:present?).join(" ")
+    [first_name, last_name].select(&:present?).join(' ')
   end
 
   def username
@@ -43,8 +43,8 @@ class User < ApplicationRecord
 
   def create_default_collection
     collections.create!(
-      name: "Unsorted",
-      icon: "📥",
+      name: 'Unsorted',
+      icon: '📥',
       is_default: true
     )
   end

@@ -11,12 +11,12 @@ class ApplicationBlueprint < Blueprinter::Base
     end
 
     def include_association?(options, association_name)
-      return true if options.dig(:include)&.include?(association_name)
+      return true if options[:include]&.include?(association_name)
 
       # Recursive search for nested associations
-      return options[:include].is_a?(Hash) && options[:include].any? do |key, value|
+      options[:include].is_a?(Hash) && options[:include].any? do |_key, value|
         include_association?({ include: value }, association_name)
       end
     end
   end
-end 
+end

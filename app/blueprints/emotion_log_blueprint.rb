@@ -35,12 +35,12 @@ class EmotionLogBlueprint < ApplicationBlueprint
 
   # Format: "July 06, 2025 at 2:30 PM"
   field :formatted_captured_at do |emotion_log|
-    emotion_log.captured_at.strftime("%B %d, %Y at %l:%M %p")
+    emotion_log.captured_at.strftime('%B %d, %Y at %l:%M %p')
   end
 
   association(
     :user,
     blueprint: UserBlueprint,
-    if: ->(*, options) { self.include_association?(options, :user) },
+    if: ->(*, options) { include_association?(options, :user) }
   )
-end 
+end

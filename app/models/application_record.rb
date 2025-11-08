@@ -15,11 +15,9 @@ class ApplicationRecord < ActiveRecord::Base
 
   # Default scope for filtering records by text; case-insensitive.
   # Can be overridden in subclasses.
-  scope :filter_by_text, ->(text) {
-    if text.blank?
-      return all
-    end
+  scope :filter_by_text, lambda { |text|
+    return all if text.blank?
 
-    return where("name ILIKE ?", "%#{text}%")
+    where('name ILIKE ?', "%#{text}%")
   }
-end 
+end

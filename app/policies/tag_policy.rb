@@ -27,4 +27,4 @@ class TagPolicy < ApplicationPolicy
       scope.all
     end
   end
-end 
+end

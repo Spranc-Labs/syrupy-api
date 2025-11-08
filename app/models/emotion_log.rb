@@ -26,7 +26,7 @@ class EmotionLog < ApplicationRecord
 
   scope :for_user, ->(user) { where(user: user) }
   scope :by_emotion, ->(emotion) { where(emotion_label: emotion) if emotion.present? }
-  scope :by_date_range, ->(start_date, end_date) {
+  scope :by_date_range, lambda { |start_date, end_date|
     where(captured_at: start_date..end_date) if start_date.present? && end_date.present?
   }
   scope :recent, -> { order(captured_at: :desc) }
@@ -56,6 +56,6 @@ class EmotionLog < ApplicationRecord
   end
 
   def formatted_captured_at
-    captured_at.strftime("%B %d, %Y at %I:%M %p")
+    captured_at.strftime('%B %d, %Y at %I:%M %p')
   end
-end 
+end
