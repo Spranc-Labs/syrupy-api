@@ -243,6 +243,11 @@ if Rails.env.development?
 
   puts "Demo data created successfully!"
   puts "Demo user: #{demo_user.email}"
+
+  # Load bookmarks seed data
+  puts "\n" + "="*50
+  load Rails.root.join('db', 'seeds', 'bookmarks.rb')
+  puts "="*50 + "\n"
 end
 
 # Re-enable auditing

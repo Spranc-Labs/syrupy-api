@@ -73,7 +73,23 @@ Rails.application.routes.draw do
         end
       end
 
-      resources :resources
+      resources :collections do
+        collection do
+          patch :reorder
+        end
+      end
+
+      resources :bookmarks do
+        collection do
+          post :from_heyho
+          patch :bulk_update
+        end
+        member do
+          patch :mark_as_read
+          patch :archive
+          patch :favorite
+        end
+      end
 
       resources :tags
 
@@ -84,11 +100,15 @@ Rails.application.routes.draw do
         end
       end
 
+      # Browsing sessions (tabs) from HeyHo
+      resources :browsing_sessions, only: [:index]
+
       # HeyHo account linking
-      resources :account_links, only: [:create, :destroy] do
+      resources :account_links, only: [:create] do
         collection do
           get :status
           post :callback
+          delete :destroy
         end
       end
 

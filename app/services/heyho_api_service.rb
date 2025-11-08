@@ -98,6 +98,71 @@ class HeyhoApiService
       }
     end
 
+    # Fetch hoarder tabs (smart recommendations) for a HeyHo user
+    def fetch_browsing_sessions(heyho_user_id:, limit: nil)
+      # Call the hoarder_tabs endpoint which returns smart tab recommendations
+      # No limit means get all hoarder tabs
+      params = { lookback_days: 30 }
+      params[:limit] = limit if limit.present?
+
+      uri = URI("#{heyho_base_url}/api/v1/pattern_detections/hoarder_tabs")
+      uri.query = URI.encode_www_form(params)
+
+      request = Net::HTTP::Get.new(uri)
+      request['Content-Type'] = 'application/json'
+      # Service-to-service authentication
+      request['X-Service-Secret'] = service_secret
+      request['X-HeyHo-User-Id'] = heyho_user_id.to_s
+
+      response = Net::HTTP.start(uri.hostname, uri.port, use_ssl: uri.scheme == 'https') do |http|
+        http.request(request)
+      end
+
+      if response.is_a?(Net::HTTPSuccess)
+        parsed = JSON.parse(response.body, symbolize_names: true)
+        # Transform hoarder tabs into a format compatible with our frontend
+        hoarder_tabs = parsed.dig(:data, :hoarder_tabs) || []
+
+        {
+          success: true,
+          data: {
+            research_sessions: hoarder_tabs.map { |tab| transform_hoarder_tab(tab) },
+            count: hoarder_tabs.size
+          }
+        }
+      else
+        {
+          success: false,
+          error: "HeyHo API error: #{response.code} - #{response.message}"
+        }
+      end
+    rescue StandardError => e
+      Rails.logger.error("HeyHo API error: #{e.message}")
+      {
+        success: false,
+        error: "Failed to fetch browsing sessions: #{e.message}"
+      }
+    end
+
+    # Transform hoarder tab format to match expected frontend format
+    def transform_hoarder_tab(tab)
+      {
+        id: tab[:page_visit_id] || tab[:id],
+        title: tab[:title],
+        status: 'recommended',
+        research_session_tabs: [
+          {
+            id: tab[:page_visit_id] || tab[:id],
+            url: tab[:url],
+            title: tab[:title],
+            domain: tab[:domain],
+            tab_order: 1,
+            preview: tab[:preview]
+          }
+        ]
+      }
+    end
+
     private
 
     def heyho_base_url

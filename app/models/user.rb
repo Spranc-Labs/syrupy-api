@@ -10,11 +10,14 @@ class User < ApplicationRecord
   has_many :habits, dependent: :destroy
   has_many :habit_logs, dependent: :destroy
   has_many :emotion_logs, dependent: :destroy
-  has_many :resources, dependent: :destroy
+  has_many :collections, dependent: :destroy
+  has_many :bookmarks, dependent: :destroy
 
   validates :first_name, presence: true
   validates :last_name, presence: true
   validates :email, presence: true, uniqueness: { case_sensitive: false }
+
+  after_create :create_default_collection
 
   scope :filter_by_text, ->(query) {
     if query.present?
@@ -34,5 +37,15 @@ class User < ApplicationRecord
 
   def username
     account&.email || email
+  end
+
+  private
+
+  def create_default_collection
+    collections.create!(
+      name: "Unsorted",
+      icon: "📥",
+      is_default: true
+    )
   end
 end
