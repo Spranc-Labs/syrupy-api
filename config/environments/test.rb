@@ -60,7 +60,6 @@ Rails.application.configure do
   # Raise error when a before_action's only/except options reference missing actions
   config.action_controller.raise_on_missing_callback_actions = true
 
-  # Allow test host
-  config.hosts << 'api.test'
-  config.hosts << 'www.example.com'
+  # Disable HostAuthorization middleware in test environment
+  config.middleware.delete ActionDispatch::HostAuthorization
 end

@@ -24,6 +24,11 @@ RSpec.configure do |config|
 
   # Disable external HTTP requests in tests
   WebMock.disable_net_connect!(allow_localhost: true)
+
+  # Set default host for request specs
+  config.before(:each, type: :request) do
+    host! 'api.test'
+  end
 end
 
 # Load support files

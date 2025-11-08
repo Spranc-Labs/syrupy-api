@@ -16,12 +16,15 @@ class BookmarkBlueprint < Blueprinter::Base
   end
 
   view :with_tags do
-    includes :domain
+    fields :id, :url, :title, :description, :status, :saved_at
+    field :domain, &:extract_domain
     association :tags, blueprint: TagBlueprint
   end
 
   view :detailed do
-    includes :domain
+    fields :url, :title, :description, :note, :status, :source, :heyho_page_visit_id,
+           :saved_at, :read_at, :archived_at, :created_at, :updated_at, :metadata
+    field :domain, &:extract_domain
     association :collection, blueprint: CollectionBlueprint
     association :tags, blueprint: TagBlueprint
 
