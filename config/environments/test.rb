@@ -13,7 +13,7 @@ Rails.application.configure do
   # recommended that you enable it in continuous integration systems to ensure eager
   # loading is working properly before deploying your code.
   # Disabled for now due to frozen autoload paths issue with Rails 7.1
-  config.eager_load = ENV.fetch('CI', nil) == 'true' ? false : false
+  config.eager_load = false
 
   # Configure public file server for tests with Cache-Control for performance.
   config.public_file_server.enabled = true
