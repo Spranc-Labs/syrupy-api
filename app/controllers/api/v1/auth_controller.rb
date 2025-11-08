@@ -26,7 +26,7 @@ module Api
           render json: {
             success: true,
             message: 'Account created successfully',
-            user: user_json(@user),
+            user: UserBlueprint.render_as_hash(@user),
             access_token: access_token,
             refresh_token: refresh_token
           }, status: :created
@@ -50,7 +50,7 @@ module Api
           render json: {
             success: true,
             message: 'Logged in successfully',
-            user: user_json(@account.user),
+            user: UserBlueprint.render_as_hash(@account.user),
             access_token: access_token,
             refresh_token: refresh_token
           }
@@ -78,7 +78,7 @@ module Api
         if current_user
           render json: {
             success: true,
-            user: user_json(current_user)
+            user: UserBlueprint.render_as_hash(current_user)
           }
         else
           render json: {
@@ -116,19 +116,6 @@ module Api
       end
 
       private
-
-      def user_json(user)
-        {
-          id: user.id,
-          first_name: user.first_name,
-          last_name: user.last_name,
-          email: user.email,
-          created_at: user.created_at,
-          updated_at: user.updated_at,
-          full_name: "#{user.first_name} #{user.last_name}".strip,
-          username: user.email
-        }
-      end
 
       def account_params
         {
