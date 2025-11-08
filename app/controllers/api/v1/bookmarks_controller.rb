@@ -24,8 +24,8 @@ module Api
         # Apply sorting
         @bookmarks = apply_sorting(@bookmarks, params[:sort_by] || 'saved_at')
 
-        # Paginate
-        @bookmarks = @bookmarks.page(params[:page]).per(params[:per_page] || 20)
+        # Paginate (using will_paginate)
+        @bookmarks = @bookmarks.paginate(page: params[:page], per_page: params[:per_page] || 20)
 
         render json: BookmarkBlueprint.render(@bookmarks, view: :with_tags)
       end
